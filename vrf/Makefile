@@ -14,7 +14,7 @@ VERILATOR_FLAGS += -x-assign fast
 # Warn abount lint issues; may not want this on less solid designs
 VERILATOR_FLAGS += -Wall
 # Make waveforms
-VERILATOR_FLAGS += --trace --trace-fst
+VERILATOR_FLAGS += --trace
 # Check SystemVerilog assertions
 VERILATOR_FLAGS += --assert
 # Generate coverage analysis
@@ -27,19 +27,31 @@ VERILATOR_FLAGS += --build
 
 VERILATOR_INPUT = -f input.vc test_top.sv sim_main.cpp
 
-default: sim wave
+TESTS_LIST = rv_fetch rv_decode rv_exec rv_memory rv_memory2 rw_write
+
+#default: sim wave
+default: $(TESTS_LIST)
+
+rv%:
+	@echo "--- Run test $@ ---"
+	@rm -rf logs logs_$@ obj_dir
+	$(VERILATOR) $(VERILATOR_FLAGS) -f input.vc $@.sv tb_$@.cpp
+	@mkdir -p logs
+	obj_dir/V$@ +trace || (exit 1)
+	@mv logs logs_$@
+	@rm -rf obj_dir
 
 sim:
 	@$(VERILATOR) $(VERILATOR_FLAGS) $(VERILATOR_INPUT)
 	@rm -rf logs
 	@mkdir -p logs
-	obj_dir/Vtest_top +trace
+	obj_dir/Vtest_top +trace || (exit 1)
 #	@echo "-- COVERAGE ----------------"
 #	@rm -rf logs/annotated
 #	$(VERILATOR_COVERAGE) --annotate logs/annotated logs/coverage.dat
 
 wave:
-	gtkwave logs/wave.vcd
+	gtkwave -a test.gtkw -6 -7 logs/wave.vcd
 
 show-config:
 	$(VERILATOR) -V

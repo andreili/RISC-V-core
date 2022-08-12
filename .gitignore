@@ -1,3 +1,5 @@
 */logs/*
 */obj_dir/*
+*/out/*
+*/*/out/*
 *.bak

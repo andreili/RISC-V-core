@@ -6,6 +6,7 @@ module tcm
     parameter   MEM_ADDR_WIDTH          = 8
 )
 (
+    input   wire                        i_reset_n,
     input   wire                        i_clk,
     input   wire                        i_sel,
     input   wire[31:0]                  i_wb_addr,
@@ -18,12 +19,29 @@ module tcm
     output  wire[31:0]                  o_wb_rdata
 );
 
+//`define OUT_REG
+
     localparam  MEM_SIZE = 2 ** MEM_ADDR_WIDTH;
 
     wire[(MEM_ADDR_WIDTH)-1:0]  w_addr;
     reg[31:0]   r_mem[(MEM_SIZE-1):0];
     reg[31:0]   r_out;
     reg         r_ack;
+    reg         r_prev;
+    wire        w_cur;
+    wire        w_rise_edge;
+
+`ifdef OUT_REG
+    assign w_cur = i_wb_stb & i_wb_cyc;
+    always_ff @(posedge i_clk)
+    begin
+        if (!i_reset_n)
+            r_prev <= '0;
+        else
+            r_prev <= w_cur;
+    end
+    assign w_rise_edge = w_cur && (!r_prev);
+`endif
 
     assign w_addr = i_wb_addr[2 +: MEM_ADDR_WIDTH];
 
@@ -39,26 +57,34 @@ module tcm
             r_mem[w_addr][24+:8] <= i_wb_wdata[24+:8];
     end
 
+`ifdef OUT_REG
     always_ff @(posedge i_clk)
     begin
-        if ((i_wb_we == '0) & i_wb_stb & i_wb_cyc & i_wb_sel[0])
+        if (i_wb_stb & i_wb_cyc & i_wb_sel[0])
             r_out[0+:8] <= r_mem[w_addr][0+:8];
-        if ((i_wb_we == '0) & i_wb_stb & i_wb_cyc & i_wb_sel[1])
+        if (i_wb_stb & i_wb_cyc & i_wb_sel[1])
             r_out[8+:8] <= r_mem[w_addr][8+:8];
-        if ((i_wb_we == '0) & i_wb_stb & i_wb_cyc & i_wb_sel[2])
+        if (i_wb_stb & i_wb_cyc & i_wb_sel[2])
             r_out[16+:8] <= r_mem[w_addr][16+:8];
-        if ((i_wb_we == '0) & i_wb_stb & i_wb_cyc & i_wb_sel[3])
+        if (i_wb_stb & i_wb_cyc & i_wb_sel[3])
             r_out[24+:8] <= r_mem[w_addr][24+:8];
     end
 
     always_ff @(posedge i_clk)
-        r_ack <= i_wb_stb & i_wb_cyc;
+        r_ack <= w_rise_edge;
 
     assign o_wb_rdata = r_out;
     assign o_wb_ack = r_ack;
+`else
+    assign o_wb_ack = i_wb_stb & i_wb_cyc;
+    assign o_wb_rdata[ 0+:8] = r_mem[w_addr][ 0+:8];
+    assign o_wb_rdata[ 8+:8] = r_mem[w_addr][ 8+:8];
+    assign o_wb_rdata[16+:8] = r_mem[w_addr][16+:8];
+    assign o_wb_rdata[24+:8] = r_mem[w_addr][24+:8];
+`endif
 
     initial begin
-        $readmemh("mem.vh", r_mem);
+        $readmemh("../vrf/test_fw/out/risc.vh", r_mem);
     end
 
 endmodule

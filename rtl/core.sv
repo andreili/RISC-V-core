@@ -42,7 +42,22 @@ module core
         .o_wb_cyc                       (w_wb_cyc)
     );
 
-    localparam MAIN_NIC_SEL_WIDTH       = 4;
+    tcm u_tcm
+    (
+        .i_reset_n                      (i_reset_n),
+        .i_clk                          (i_clk),
+        .i_sel                          (1'b1),
+        .i_wb_addr                      (w_wb_addr),
+        .i_wb_stb                       (w_wb_stb),
+        .i_wb_cyc                       (w_wb_cyc),
+        .i_wb_we                        (w_wb_we),
+        .i_wb_sel                       (w_wb_sel),
+        .i_wb_wdata                     (w_wb_wdata),
+        .o_wb_ack                       (w_wb_ack),
+        .o_wb_rdata                     (w_wb_rdata)
+    );
+
+    /*localparam MAIN_NIC_SEL_WIDTH       = 4;
     localparam MAIN_NIC_SLAVES_COUNT    = 2 ** MAIN_NIC_SEL_WIDTH;
     localparam MAIN_NIC_SLAVE_TCM       = 0;
     //localparam MAIN_NIC_SLAVE_UART      = 1;
@@ -81,6 +96,6 @@ module core
         .i_wb_wdata                     (w_wb_wdata),
         .o_wb_ack                       (w_main_slave_ack[MAIN_NIC_SLAVE_TCM]),
         .o_wb_rdata                     (w_main_slave_rdata[MAIN_NIC_SLAVE_TCM])
-    );
+    );*/
 
 endmodule
