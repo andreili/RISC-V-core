@@ -6,7 +6,7 @@ VERILATOR = verilator
 VERILATOR_COVERAGE = verilator_coverage
 
 # Generate C++ in executable form
-VERILATOR_FLAGS += -cc --exe -j 4
+VERILATOR_FLAGS += -cc --exe
 # Generate makefile dependencies (not shown as complicates the Makefile)
 #VERILATOR_FLAGS += -MMD
 # Optimize
@@ -29,29 +29,30 @@ VERILATOR_INPUT = -f input.vc test_top.sv sim_main.cpp
 
 TESTS_LIST = rv_fetch rv_decode rv_exec rv_memory rv_memory2 rw_write
 
-#default: sim wave
-default: $(TESTS_LIST)
+default: top wave
+#default: $(TESTS_LIST)
 
 rv%:
-	@echo "--- Run test $@ ---"
+	@echo "--- Prepare test $@ ---"
 	@rm -rf logs logs_$@ obj_dir
-	$(VERILATOR) $(VERILATOR_FLAGS) -f input.vc $@.sv tb_$@.cpp
-	@mkdir -p logs
-	obj_dir/V$@ +trace || (exit 1)
-	@mv logs logs_$@
-	@rm -rf obj_dir
+	$(VERILATOR) $(VERILATOR_FLAGS) -CFLAGS "-I../tb/ -DTOP_NAME=$@" -f input.vc $@.sv tb/tb.cpp tb_$@.cpp
+	@mkdir -p logs_$@
+	@echo "--- Run test $@ ---"
+	@obj_dir/V$@ +trace || (exit 1)
+#	@rm -rf obj_dir logs
+	@echo "--- Test $@ finished ---"
+	gtkwave -a $@.gtkw -6 -7 logs_$@/wave.vcd
 
-sim:
-	@$(VERILATOR) $(VERILATOR_FLAGS) $(VERILATOR_INPUT)
-	@rm -rf logs
-	@mkdir -p logs
-	obj_dir/Vtest_top +trace || (exit 1)
+top:
+	@rm -rf logs logs_$@ obj_dir
+	@$(VERILATOR) $(VERILATOR_FLAGS) -CFLAGS "-I../tb/ -DTOP_NAME=$@" -f input.vc $@.sv tb/tb.cpp sim_$@.cpp
+	@mkdir -p logs_$@
+	obj_dir/Vtop +trace || (exit 1)
+#	@rm -rf obj_dir logs
 #	@echo "-- COVERAGE ----------------"
 #	@rm -rf logs/annotated
 #	$(VERILATOR_COVERAGE) --annotate logs/annotated logs/coverage.dat
-
-wave:
-	gtkwave -a test.gtkw -6 -7 logs/wave.vcd
+	gtkwave -a $@.gtkw -6 -7 logs_$@/wave.vcd
 
 show-config:
 	$(VERILATOR) -V
