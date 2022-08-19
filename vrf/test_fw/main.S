@@ -7,7 +7,7 @@ Reset:
     addi    x1, x0, 16  ; x1=16
     slli    x0, x1, 2
     slti    x0, x1, 9
-    sltiu   x0, x1, 10
+    sltiu   x0, x1, 20
     xori    x0, x1, 1
     srli    x0, x1, 2
     srai    x0, x1, 3
@@ -15,7 +15,6 @@ Reset:
     andi    x0, x1, 15
     auipc   x0, 10
     lui     x0, 12
-    jalr    x0, x1, 6
     lb      x9, 1(x1)
     lh      x10, 2(x1)
     lw      x11, 0(x1)

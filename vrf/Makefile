@@ -29,7 +29,7 @@ VERILATOR_INPUT = -f input.vc test_top.sv sim_main.cpp
 
 TESTS_LIST = rv_fetch rv_decode rv_exec rv_memory rv_memory2 rw_write
 
-default: top wave
+default: top
 #default: $(TESTS_LIST)
 
 rv%:

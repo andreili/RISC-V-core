@@ -19,9 +19,22 @@ module rv_exec
     input   wire[1:0]                   i_res_src,
     input   wire                        i_jump,
     input   wire                        i_branch,
-    input   wire                        i_alu_src,
+    input   wire[1:0]                   i_alu_op1_sel,
+    input   wire                        i_alu_op2_sel,
     input   wire[2:0]                   i_funct3,
-    input   wire[2:0]                   i_alu_ctrl
+    input   wire[5:0]                   i_alu_ctrl,
+
+    output  wire[31:0]                  o_alu_result,
+    output  wire                        o_reg_write,
+    output  wire                        o_mem_read,
+    output  wire                        o_mem_write,
+    output  wire[4:0]                   o_rd,
+    output  wire[31:2]                  o_pc_p4,
+    output  wire[1:0]                   o_res_src,
+    output  wire                        o_pc_src,
+    output  wire[31:2]                  o_pc_target,
+    output  wire[2:0]                   o_funct3,
+    output  wire[31:0]                  o_rs2_val
 );
 
     reg[31:2]   r_pc;
@@ -38,13 +51,11 @@ module rv_exec
     reg         r_mem_write;
     reg         r_jump;
     reg         r_branch;
-    reg         r_alu_src;
+    reg[1:0]    r_alu_op1_sel;
+    reg         r_alu_op2_sel;
     wire        w_zero;
-    wire[31:0]  w_alu_result;
-    wire        w_pc_src;
-    wire[31:2]  w_pc_target;
     reg[2:0]    r_funct3;
-    reg[2:0]    r_alu_ctrl;
+    reg[5:0]    r_alu_ctrl;
 
     always_ff @(posedge i_clk)
     begin
@@ -64,7 +75,8 @@ module rv_exec
             r_mem_write <= '0;
             r_jump <= '0;
             r_branch <= '0;
-            r_alu_src <= '0;
+            r_alu_op1_sel <= '0;
+            r_alu_op2_sel <= '0;
             r_funct3 <= '0;
             r_alu_ctrl <= '0;
         end
@@ -84,29 +96,44 @@ module rv_exec
             r_mem_write <= i_mem_write;
             r_jump <= i_jump;
             r_branch <= i_branch;
-            r_alu_src <= i_alu_src;
+            r_alu_op1_sel <= i_alu_op1_sel;
+            r_alu_op2_sel <= i_alu_op2_sel;
             r_funct3 <= i_funct3;
             r_alu_ctrl <= i_alu_ctrl;
         end
     end
 
-    wire        w_overflow;
-
-    wire[31:0]  w_op2;
-    assign  w_op2 = r_alu_src ? r_imm : r_rs2_val;
+    reg[31:0]   w_op2, w_op1;
+    always_comb
+    begin
+        case (r_alu_op1_sel)
+        `ALU_SRC_OP1_REG: w_op1 = r_rs1_val;
+        `ALU_SRC_OP1_PC:  w_op1 = { r_pc, 2'b0 };
+        default:          w_op1 = '0;
+        endcase
+    end
+    assign  w_op2 = (r_alu_op2_sel == `ALU_SRC_OP2_IMM) ? r_imm : r_rs2_val;
 
     rv_alu
     u_alu
     (
-        .i_src_a                        (r_rs1_val),
+        .i_src_a                        (w_op1),
         .i_src_b                        (w_op2),
         .i_ctrl                         (r_alu_ctrl),
-        .o_result                       (w_alu_result),
-        .o_overflow                     (w_overflow),
+        .o_result                       (o_alu_result),
         .o_zero                         (w_zero)
     );
 
-    assign  w_pc_src = (r_jump | (r_branch & w_zero));
-    assign  w_pc_target = r_pc + r_imm[31:2];
+    assign  o_pc_src = (r_jump | (r_branch & w_zero));
+    assign  o_pc_target = r_pc + r_imm[31:2];
+
+    assign  o_reg_write = r_reg_write;
+    assign  o_mem_read = r_mem_read;
+    assign  o_mem_write = r_mem_write;
+    assign  o_rd = r_rd;
+    assign  o_pc_p4 = r_pc_p4;
+    assign  o_res_src = r_res_src;
+    assign  o_funct3 = r_funct3;
+    assign  o_rs2_val = r_rs2_val;
 
 endmodule

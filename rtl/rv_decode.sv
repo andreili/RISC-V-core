@@ -22,20 +22,13 @@ module rv_decode
     output  wire[1:0]                   o_res_src,
     output  wire                        o_jump,
     output  wire                        o_branch,
-    output  wire                        o_alu_src,
+    output  wire[1:0]                   o_alu_op1_sel,
+    output  wire                        o_alu_op2_sel,
     output  wire[2:0]                   o_funct3,
-    output  wire[2:0]                   o_alu_ctrl
+    output  wire[5:0]                   o_alu_ctrl
 );
 
-    localparam  INST_OP_LOAD            = 7'h03;
-    localparam  INST_OP_IMM             = 7'h13;
-    localparam  INST_OP_AUIPC           = 7'h17;
-    localparam  INST_OP_SAVE            = 7'h23;
-    localparam  INST_OP_REG             = 7'h33;
-    localparam  INST_OP_LUI             = 7'h37;
-    localparam  INST_OP_BRANCH          = 7'h63;
-    localparam  INST_OP_RJUMP           = 7'h67;
-    localparam  INST_OP_IJUMP           = 7'h6F;
+`include "rv_defines.vh"
 
     reg[31:0]   r_instr;
     reg[31:2]   r_pc;
@@ -49,13 +42,9 @@ module rv_decode
     reg[31:0]   w_imm;
 
     wire        w_reg_write;
-    reg[2:0]    w_imm_src;
     reg[1:0]    w_res_src;
-    wire        w_mem_read;
-    wire        w_mem_write;
-    reg         w_jump;
-    wire        w_branch;
-    reg         w_alu_src;
+    reg[1:0]    r_alu_op1_sel;
+    reg         r_alu_op2_sel;
 
     always_ff @(posedge i_clk)
     begin
@@ -86,163 +75,267 @@ module rv_decode
     assign      w_rs2            = r_instr[24:20];
     assign      w_funct7         = r_instr[31:25];
 
-    always_comb
-    begin
-        case (w_op)
-        INST_OP_LOAD:   w_imm_src = 3'b000;
-        INST_OP_IMM:    w_imm_src = 3'b000;
-        INST_OP_RJUMP:  w_imm_src = 3'b000;
-        INST_OP_SAVE:   w_imm_src = 3'b001;
-        INST_OP_BRANCH: w_imm_src = 3'b010;
-        INST_OP_IJUMP:  w_imm_src = 3'b011;
-        INST_OP_AUIPC:  w_imm_src = 3'b100;
-        INST_OP_LUI:    w_imm_src = 3'b100;
-        default:        w_imm_src = 3'b111;
-        endcase
-    end
+    wire    w_inst_supported;
+    wire    w_inst_lb, w_inst_lh, w_inst_lw, w_inst_lbu, w_inst_lhu;
+    wire    w_inst_addi, w_inst_slli, w_inst_slti, w_inst_sltiu;
+    wire    w_inst_xori, w_inst_srli, w_inst_srai, w_inst_ori, w_inst_andi;
+    wire    w_inst_auipc;
+    wire    w_inst_sb, w_inst_sh, w_inst_sw;
+    wire    w_inst_add, w_inst_sub, w_inst_sll, w_inst_slt, w_inst_sltu;
+    wire    w_inst_xor, w_inst_srl, w_inst_sra, w_inst_or, w_inst_and;
+    wire    w_inst_lui;
+    wire    w_inst_beq, w_inst_bne, w_inst_blt, w_inst_bge, w_inst_bltu, w_inst_bgeu;
+    wire    w_inst_jalr;
+    wire    w_inst_jal;
+
+    wire    w_inst_load;
+    wire    w_inst_store;
+    wire    w_inst_imm;
+    wire    w_inst_reg;
+    wire    w_inst_branch;
+
+    assign  w_inst_supported = 
+            w_inst_lb    | w_inst_lh   | w_inst_lw   | w_inst_lbu   | w_inst_lhu  |
+            w_inst_addi  | w_inst_slli | w_inst_slti | w_inst_sltiu |
+            w_inst_xori  | w_inst_srli | w_inst_srai | w_inst_ori   | w_inst_andi |
+            w_inst_auipc |
+            w_inst_sb    | w_inst_sh   | w_inst_sw   |
+            w_inst_add   | w_inst_sub  | w_inst_sll  | w_inst_slt   | w_inst_sltu |
+            w_inst_xor   | w_inst_srl  | w_inst_sra  | w_inst_or    | w_inst_and  |
+            w_inst_lui   |
+            w_inst_beq   | w_inst_bne  | w_inst_blt  | w_inst_bge   | w_inst_bltu | w_inst_bgeu |
+            w_inst_jalr  |
+            w_inst_jal;
+
+    // memory read operations
+    assign  w_inst_lb       = (w_op == 7'b0000011) & (w_funct3 == 3'b000);
+    assign  w_inst_lh       = (w_op == 7'b0000011) & (w_funct3 == 3'b001);
+    assign  w_inst_lw       = (w_op == 7'b0000011) & (w_funct3 == 3'b010);
+    assign  w_inst_lbu      = (w_op == 7'b0000011) & (w_funct3 == 3'b100);
+    assign  w_inst_lhu      = (w_op == 7'b0000011) & (w_funct3 == 3'b101);
+
+    // arifmetical with immediate
+    assign  w_inst_addi     = (w_op == 7'b0010011) & (w_funct3 == 3'b000);
+    assign  w_inst_slli     = (w_op == 7'b0010011) & (w_funct3 == 3'b001);
+    assign  w_inst_slti     = (w_op == 7'b0010011) & (w_funct3 == 3'b010);
+    assign  w_inst_sltiu    = (w_op == 7'b0010011) & (w_funct3 == 3'b011);
+    assign  w_inst_xori     = (w_op == 7'b0010011) & (w_funct3 == 3'b100);
+    assign  w_inst_srli     = (w_op == 7'b0010011) & (w_funct3 == 3'b101) & (w_funct7 == 7'b0000000);
+    assign  w_inst_srai     = (w_op == 7'b0010011) & (w_funct3 == 3'b101) & (w_funct7 == 7'b0100000);
+    assign  w_inst_ori      = (w_op == 7'b0010011) & (w_funct3 == 3'b110);
+    assign  w_inst_andi     = (w_op == 7'b0010011) & (w_funct3 == 3'b111);
+
+    // add upper immediate to PC
+    assign  w_inst_auipc    = (w_op == 7'b0010111);
+
+    // memory write operations
+    assign  w_inst_sb       = (w_op == 7'b0100011) & (w_funct3 == 3'b000);
+    assign  w_inst_sh       = (w_op == 7'b0100011) & (w_funct3 == 3'b001);
+    assign  w_inst_sw       = (w_op == 7'b0100011) & (w_funct3 == 3'b010);
+
+    // arifmetical with register
+    assign  w_inst_add      = (w_op == 7'b0110011) & (w_funct3 == 3'b000) & (w_funct7 == 7'b0000000);
+    assign  w_inst_sub      = (w_op == 7'b0110011) & (w_funct3 == 3'b000) & (w_funct7 == 7'b0100000);
+    assign  w_inst_sll      = (w_op == 7'b0110011) & (w_funct3 == 3'b001) & (w_funct7 == 7'b0000000);
+    assign  w_inst_slt      = (w_op == 7'b0110011) & (w_funct3 == 3'b010) & (w_funct7 == 7'b0000000);
+    assign  w_inst_sltu     = (w_op == 7'b0110011) & (w_funct3 == 3'b011) & (w_funct7 == 7'b0000000);
+    assign  w_inst_xor      = (w_op == 7'b0110011) & (w_funct3 == 3'b100) & (w_funct7 == 7'b0000000);
+    assign  w_inst_srl      = (w_op == 7'b0110011) & (w_funct3 == 3'b101) & (w_funct7 == 7'b0000000);
+    assign  w_inst_sra      = (w_op == 7'b0110011) & (w_funct3 == 3'b101) & (w_funct7 == 7'b0100000);
+    assign  w_inst_or       = (w_op == 7'b0110011) & (w_funct3 == 3'b110) & (w_funct7 == 7'b0000000);
+    assign  w_inst_and      = (w_op == 7'b0110011) & (w_funct3 == 3'b111) & (w_funct7 == 7'b0000000);
+
+    assign  w_inst_lui      = (w_op == 7'b0110111);
+
+    // branches
+    assign  w_inst_beq      = (w_op == 7'b1100011) & (w_funct3 == 3'b000);
+    assign  w_inst_bne      = (w_op == 7'b1100011) & (w_funct3 == 3'b001);
+    assign  w_inst_blt      = (w_op == 7'b1100011) & (w_funct3 == 3'b100);
+    assign  w_inst_bge      = (w_op == 7'b1100011) & (w_funct3 == 3'b101);
+    assign  w_inst_bltu     = (w_op == 7'b1100011) & (w_funct3 == 3'b110);
+    assign  w_inst_bgeu     = (w_op == 7'b1100011) & (w_funct3 == 3'b111);
+
+    // jumps
+    assign  w_inst_jalr     = (w_op == 7'b1100111) & (w_funct3 == 3'b000);
+    assign  w_inst_jal      = (w_op == 7'b1101111);
+
+    assign  w_inst_load = w_inst_lb | w_inst_lh | w_inst_lw | w_inst_lbu | w_inst_lhu;
+    assign  w_inst_store = w_inst_sb | w_inst_sh | w_inst_sw;
+    assign  w_inst_imm  = w_inst_addi  | w_inst_slli | w_inst_slti | w_inst_sltiu |
+                w_inst_xori  | w_inst_srli | w_inst_srai | w_inst_ori   | w_inst_andi;
+    assign  w_inst_reg  = w_inst_add   | w_inst_sub  | w_inst_sll  | w_inst_slt   | w_inst_sltu |
+                w_inst_xor   | w_inst_srl  | w_inst_sra  | w_inst_or    | w_inst_and;
+    assign  w_inst_branch =  w_inst_beq   | w_inst_bne  | w_inst_blt  | w_inst_bge   | w_inst_bltu | w_inst_bgeu;
 
     always_comb
     begin
-        case (w_imm_src)
-        // I type
-        3'b000: w_imm = { {21{r_instr[31]}},
-                                r_instr[30:20] };
-        // L/S type
-        3'b001: w_imm = { {21{r_instr[31]}},
-                                r_instr[30:25],
-                                r_instr[11:7] };
-        // B type
-        3'b010: w_imm = { {20{r_instr[31]}},
-                                r_instr[7],
-                                r_instr[30:25],
-                                r_instr[11:8],
-                                1'b0 };
-        // J type
-        3'b011: w_imm = { {12{r_instr[31]}},
-                                r_instr[19:12],
-                                r_instr[20],
-                                r_instr[30:21],
-                                1'b0 };
-        // U type
-        3'b100: w_imm = { r_instr[31:12],
-                                {12{1'b0}} };
+        case (1'b1)
+        w_inst_jal:
+            w_imm = { {12{r_instr[31]}}, r_instr[19:12], r_instr[20], r_instr[30:21], 1'b0 };
+        |{w_inst_lui, w_inst_auipc}:
+            w_imm = { r_instr[31:12], {12{1'b0}} };
+        |{w_inst_jalr, w_inst_load, w_inst_imm}:
+            w_imm = { {21{r_instr[31]}}, r_instr[30:20] };
+        w_inst_branch:
+            w_imm = { {20{r_instr[31]}}, r_instr[7], r_instr[30:25], r_instr[11:8], 1'b0 };
+        w_inst_store:
+            w_imm = { {21{r_instr[31]}}, r_instr[30:25], r_instr[11:7] };
         default:w_imm = 'x;
         endcase
     end
 
-    assign w_reg_write = (w_op == INST_OP_REG) ||
-                                (w_op == INST_OP_LOAD) ||
-                                (w_op == INST_OP_IMM) ||
-                                (w_op == INST_OP_RJUMP) ||
-                                (w_op == INST_OP_IJUMP) ||
-                                (w_op == INST_OP_AUIPC) ||
-                                (w_op == INST_OP_LUI);
-    assign w_mem_read = (w_op == INST_OP_LOAD);
-    assign w_mem_write = (w_op == INST_OP_SAVE);
-    assign w_branch = (w_op == INST_OP_BRANCH);
+    assign w_reg_write = w_inst_load | w_inst_imm | w_inst_auipc | w_inst_reg | w_inst_lui | w_inst_jalr | w_inst_jal;
+
     always_comb
     begin
-        case (w_op)
-        INST_OP_IJUMP:  w_jump = '1;
-        INST_OP_RJUMP:  w_jump = '1;
-        default:        w_jump = '0;
+        case (1'b1)
+        |{w_inst_auipc,w_inst_jal}:
+            r_alu_op1_sel = `ALU_SRC_OP1_PC;
+        w_inst_lui:
+            r_alu_op1_sel = `ALU_SRC_OP1_ZERO;
+        default:
+            r_alu_op1_sel = `ALU_SRC_OP1_REG;
         endcase
     end
+
     always_comb
     begin
-        case (w_op)
-        INST_OP_LOAD:  w_res_src = 2'b01;
-        INST_OP_IJUMP: w_res_src = 2'b10;
-        INST_OP_RJUMP: w_res_src = 2'b10;
-        default:       w_res_src = 2'b00;
+        case (1'b1)
+        |{w_inst_auipc,w_inst_jal,w_inst_lui,w_inst_imm}:
+            r_alu_op2_sel = `ALU_SRC_OP2_IMM;
+        default:
+            r_alu_op2_sel = `ALU_SRC_OP2_REG;
         endcase
     end
+
     always_comb
     begin
-        case (w_op)
-        INST_OP_LOAD:  w_alu_src = '1;
-        INST_OP_IMM:   w_alu_src = '1;
-        INST_OP_SAVE:  w_alu_src = '1;
-        INST_OP_RJUMP: w_alu_src = '1;
-        default:       w_alu_src = '0;
+        case (1'b1)
+        w_inst_load:
+            w_res_src = `RESULT_SRC_MEMORY;
+        |{w_inst_jalr,w_inst_jal}:
+            w_res_src = `RESULT_SRC_PC_P4;
+        default:
+            w_res_src = `RESULT_SRC_ALU;
         endcase
     end
-    wire[1:0]   w_alu_op;
-    wire[2:0]   w_alu_ctrl;
-    assign  w_alu_op =  (w_op == INST_OP_LOAD) ? 2'b00 :
-                        (w_op == INST_OP_SAVE) ? 2'b00 :
-                        (w_op == INST_OP_REG) ? 2'b10 :
-                        (w_op == INST_OP_BRANCH) ? 2'b01 :
-                        (w_op == INST_OP_AUIPC) ? 2'b00 :
-                        (w_op == INST_OP_LUI) ? 2'b00 :
-                        (w_op == INST_OP_IMM) ? 2'b10 :
-                        2'b11;
-    assign  w_alu_ctrl = (w_alu_op == 2'b00) ? 3'b000 :
-                        (w_alu_op == 2'b01) ? 3'b001 :
-                        ((w_funct3 == 3'b000) && (!(&{w_op[5], w_funct7[5]}))) ? 3'b000 :
-                        (w_funct3 == 3'b000) ? 3'b001 :
-                        (w_funct3 == 3'b111) ? 3'b010 :
-                        (w_funct3 == 3'b110) ? 3'b011 :
-                        (w_funct3 == 3'b010) ? 3'b101 :  // SLT
-                        (w_funct3 == 3'b011) ? 3'b101 :  // SLTU
-                        (w_funct3 == 3'b001) ? 3'b110 :
-                        (w_funct3 == 3'b101) ? 3'b111 :
-                        3'b100;
 
-    localparam  INST_R                  = 3'h0;
-    localparam  INST_I                  = 3'h1;
-    localparam  INST_S                  = 3'h2;
-    localparam  INST_B                  = 3'h3;
-    localparam  INST_U                  = 3'h4;
-    localparam  INST_J                  = 3'h5;
-    localparam  INST_R4                 = 3'h6;
-    localparam  INST_COMP               = 3'h7;
-    wire[2:0]  w_type = (w_op == INST_OP_REG) ? INST_R :
-                            ((w_op == INST_OP_LOAD) || (w_op == INST_OP_IMM) || (w_op == INST_OP_RJUMP)) ? INST_I :
-                            (w_op == INST_OP_SAVE) ? INST_S :
-                            (w_op == INST_OP_BRANCH) ? INST_B :
-                            ((w_op == INST_OP_AUIPC) || (w_op == INST_OP_LUI)) ? INST_U :
-                            (w_op == INST_OP_IJUMP) ? INST_J :
-                            INST_R4;
+    reg[5:0]    w_alu_ctrl;
 
-	reg [127:0] dbg_ascii_inst_type;
-	always @* begin
-		dbg_ascii_inst_type = "";
-		if (w_type == INST_R)    dbg_ascii_inst_type = "R";
-		if (w_type == INST_I)    dbg_ascii_inst_type = "I";
-		if (w_type == INST_S)    dbg_ascii_inst_type = "S";
-		if (w_type == INST_B)    dbg_ascii_inst_type = "B";
-		if (w_type == INST_U)    dbg_ascii_inst_type = "U";
-		if (w_type == INST_J)    dbg_ascii_inst_type = "J";
-		if (w_type == INST_R4)   dbg_ascii_inst_type = "R4";
-		if (w_type == INST_COMP) dbg_ascii_inst_type = "COMP";
-	end
+    always_comb
+    begin
+        case (1'b1)
+        w_inst_beq:
+            w_alu_ctrl[5:3] = `ALU_CMP_EQ;
+        |{w_inst_slti,w_inst_slt,w_inst_blt}:
+            w_alu_ctrl[5:3] = `ALU_CMP_LTS;
+        |{w_inst_sltiu,w_inst_bltu,w_inst_sltu}:
+            w_alu_ctrl[5:3] = `ALU_CMP_LTU;
+        w_inst_bne:
+            w_alu_ctrl[5:3] = `ALU_CMP_NEQ;
+        w_inst_bge:
+            w_alu_ctrl[5:3] = `ALU_CMP_NLTS;
+        w_inst_bgeu:
+            w_alu_ctrl[5:3] = `ALU_CMP_NLTU;
+        |{w_inst_srai,w_inst_sra}:
+            w_alu_ctrl[5:3] = `ALU_CMP_SHIFT_AR;
+        default:
+            w_alu_ctrl[5:3] = `ALU_CMP_NONE;
+        endcase
+    end
 
-	reg [127:0] dbg_ascii_op;
-	always @* begin
-		dbg_ascii_op = "";
-		if (w_op == INST_OP_LOAD)   dbg_ascii_op = "LOAD";
-		if (w_op == INST_OP_IMM)    dbg_ascii_op = "IMM";
-		if (w_op == INST_OP_AUIPC)  dbg_ascii_op = "AUIPC";
-		if (w_op == INST_OP_SAVE)   dbg_ascii_op = "SAVE";
-		if (w_op == INST_OP_REG)    dbg_ascii_op = "REG";
-		if (w_op == INST_OP_LUI)    dbg_ascii_op = "LUI";
-		if (w_op == INST_OP_BRANCH) dbg_ascii_op = "BRANCH";
-		if (w_op == INST_OP_RJUMP)  dbg_ascii_op = "RJUMP";
-		if (w_op == INST_OP_IJUMP)  dbg_ascii_op = "IJUMP";
-	end
+    always_comb
+    begin
+        case (1'b1)
+        w_inst_sub:
+            w_alu_ctrl[2:0] = `ALU_CTRL_SUB;
+        w_inst_xori | w_inst_xor:
+            w_alu_ctrl[2:0] = `ALU_CTRL_XOR;
+        w_inst_ori | w_inst_or:
+            w_alu_ctrl[2:0] = `ALU_CTRL_OR;
+        w_inst_andi | w_inst_and:
+            w_alu_ctrl[2:0] = `ALU_CTRL_AND;
+        w_inst_slli | w_inst_sll:
+            w_alu_ctrl[2:0] = `ALU_CTRL_SHL;
+        w_inst_srli | w_inst_srl | w_inst_srai | w_inst_sra:
+            w_alu_ctrl[2:0] = `ALU_CTRL_SHR;
+        |{w_inst_beq,w_inst_bne,w_inst_blt,w_inst_bge,w_inst_bltu,w_inst_bgeu,w_inst_slti,w_inst_slt,w_inst_sltiu,w_inst_sltu}:
+            w_alu_ctrl[2:0] = `ALU_CTRL_CMP;
+        default:
+            w_alu_ctrl[2:0] = `ALU_CTRL_ADD;
+        endcase
+    end
 
 	reg [127:0] dbg_ascii_alu_ctrl;
 	always @* begin
 		dbg_ascii_alu_ctrl = "";
-		if (w_alu_ctrl == 3'b000) dbg_ascii_alu_ctrl = "ADD";
-		if (w_alu_ctrl == 3'b001) dbg_ascii_alu_ctrl = "SUB";
-		if (w_alu_ctrl == 3'b010) dbg_ascii_alu_ctrl = "AND";
-		if (w_alu_ctrl == 3'b011) dbg_ascii_alu_ctrl = "OR";
-		if (w_alu_ctrl == 3'b100) dbg_ascii_alu_ctrl = "XOR";
-		if (w_alu_ctrl == 3'b101) dbg_ascii_alu_ctrl = "SLT";
-		if (w_alu_ctrl == 3'b110) dbg_ascii_alu_ctrl = "ShL";
-		if (w_alu_ctrl == 3'b111) dbg_ascii_alu_ctrl = "ShR";
+        if (w_alu_ctrl[2:0] != 3'b111)
+        begin
+            if (w_alu_ctrl[2:0] == 3'b000) dbg_ascii_alu_ctrl = "ADD";
+            if (w_alu_ctrl[2:0] == 3'b001) dbg_ascii_alu_ctrl = "SUB";
+            if (w_alu_ctrl[2:0] == 3'b010) dbg_ascii_alu_ctrl = "XOR";
+            if (w_alu_ctrl[2:0] == 3'b011) dbg_ascii_alu_ctrl = "OR";
+            if (w_alu_ctrl[2:0] == 3'b100) dbg_ascii_alu_ctrl = "AND";
+            if (w_alu_ctrl[2:0] == 3'b101) dbg_ascii_alu_ctrl = "SHL";
+            if (w_alu_ctrl[2:0] == 3'b110) dbg_ascii_alu_ctrl = "SHR";
+            if (w_alu_ctrl[2:0] == 3'b111) dbg_ascii_alu_ctrl = "CMP";
+        end
+        else
+        begin
+            if (w_alu_ctrl[5:3] == 3'b000) dbg_ascii_alu_ctrl = "EQ";
+            if (w_alu_ctrl[5:3] == 3'b001) dbg_ascii_alu_ctrl = "LTS";
+            if (w_alu_ctrl[5:3] == 3'b010) dbg_ascii_alu_ctrl = "LTU";
+            if (w_alu_ctrl[5:3] == 3'b100) dbg_ascii_alu_ctrl = "!EQ";
+            if (w_alu_ctrl[5:3] == 3'b101) dbg_ascii_alu_ctrl = "!LTS";
+            if (w_alu_ctrl[5:3] == 3'b110) dbg_ascii_alu_ctrl = "!LTU";
+        end
+	end
+
+	reg [127:0] dbg_ascii_instr;
+	always @* begin
+		dbg_ascii_instr = "";
+
+		if (w_inst_lui)      dbg_ascii_instr = "lui";
+		if (w_inst_auipc)    dbg_ascii_instr = "auipc";
+		if (w_inst_jal)      dbg_ascii_instr = "jal";
+		if (w_inst_jalr)     dbg_ascii_instr = "jalr";
+
+		if (w_inst_beq)      dbg_ascii_instr = "beq";
+		if (w_inst_bne)      dbg_ascii_instr = "bne";
+		if (w_inst_blt)      dbg_ascii_instr = "blt";
+		if (w_inst_bge)      dbg_ascii_instr = "bge";
+		if (w_inst_bltu)     dbg_ascii_instr = "bltu";
+		if (w_inst_bgeu)     dbg_ascii_instr = "bgeu";
+
+		if (w_inst_lb)       dbg_ascii_instr = "lb";
+		if (w_inst_lh)       dbg_ascii_instr = "lh";
+		if (w_inst_lw)       dbg_ascii_instr = "lw";
+		if (w_inst_lbu)      dbg_ascii_instr = "lbu";
+		if (w_inst_lhu)      dbg_ascii_instr = "lhu";
+		if (w_inst_sb)       dbg_ascii_instr = "sb";
+		if (w_inst_sh)       dbg_ascii_instr = "sh";
+		if (w_inst_sw)       dbg_ascii_instr = "sw";
+
+		if (w_inst_addi)     dbg_ascii_instr = "addi";
+		if (w_inst_slti)     dbg_ascii_instr = "slti";
+		if (w_inst_sltiu)    dbg_ascii_instr = "sltiu";
+		if (w_inst_xori)     dbg_ascii_instr = "xori";
+		if (w_inst_ori)      dbg_ascii_instr = "ori";
+		if (w_inst_andi)     dbg_ascii_instr = "andi";
+		if (w_inst_slli)     dbg_ascii_instr = "slli";
+		if (w_inst_srli)     dbg_ascii_instr = "srli";
+		if (w_inst_srai)     dbg_ascii_instr = "srai";
+
+		if (w_inst_add)      dbg_ascii_instr = "add";
+		if (w_inst_sub)      dbg_ascii_instr = "sub";
+		if (w_inst_sll)      dbg_ascii_instr = "sll";
+		if (w_inst_slt)      dbg_ascii_instr = "slt";
+		if (w_inst_sltu)     dbg_ascii_instr = "sltu";
+		if (w_inst_xor)      dbg_ascii_instr = "xor";
+		if (w_inst_srl)      dbg_ascii_instr = "srl";
+		if (w_inst_sra)      dbg_ascii_instr = "sra";
+		if (w_inst_or)       dbg_ascii_instr = "or";
+		if (w_inst_and)      dbg_ascii_instr = "and";
 	end
 
     assign  o_rs1 = w_rs1;
@@ -252,12 +345,13 @@ module rv_decode
     assign  o_pc_p4 = r_pc_p4;
     assign  o_imm = w_imm;
     assign  o_reg_write = w_reg_write;
-    assign  o_mem_read = w_mem_write;
-    assign  o_mem_write = w_mem_write;
+    assign  o_mem_read = w_inst_load;
+    assign  o_mem_write = w_inst_store;
     assign  o_res_src = w_res_src;
-    assign  o_jump = w_jump;
-    assign  o_branch = w_branch;
-    assign  o_alu_src = w_alu_src;
+    assign  o_jump = w_inst_jalr | w_inst_jal;
+    assign  o_branch = w_inst_branch;
+    assign  o_alu_op1_sel = r_alu_op1_sel;
+    assign  o_alu_op2_sel = r_alu_op2_sel;
     assign  o_funct3 = w_funct3;
     assign  o_alu_ctrl = w_alu_ctrl;
 

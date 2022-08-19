@@ -24,7 +24,22 @@ module rv_fetch
     wire        w_bus_request;
     reg         r_bus_request;
 
-    // stage 1
+    // staged core workarround
+    reg[31:2]   r_pc_latched;
+    reg         r_pc_sel;
+    always_ff @(posedge i_clk)
+    begin
+        if (!i_reset_n)
+        begin
+            r_pc_sel <= '0;
+        end
+        else if (i_pc_sel)
+        begin
+            r_pc_latched <= i_pc_target;
+            r_pc_sel <= '1;
+        end
+    end
+
     assign  w_fetch_pc_p4 = r_fetch_pc + 1'b1;
     assign  w_fetch_pc_next = i_pc_sel ? i_pc_target : w_fetch_pc_p4;
 
@@ -35,7 +50,18 @@ module rv_fetch
         // staged core workarround
         //else if ((!i_stall) & i_bus_ack)
         else if (!i_pre_stall)
-            r_fetch_pc <= w_fetch_pc_next;
+        begin
+            // staged core workarround
+            if (r_pc_sel)
+            begin
+                r_pc_sel <= '0;
+                r_fetch_pc <= r_pc_latched;
+            end
+            else
+            begin
+                r_fetch_pc <= w_fetch_pc_next;
+            end
+        end
     end
 
     assign  o_pc = r_fetch_pc;
