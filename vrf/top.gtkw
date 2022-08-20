@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
-[*] Fri Aug 19 22:27:42 2022
+[*] Sat Aug 20 10:04:45 2022
 [*]
 [dumpfile] "D:\Projects\RISC-V\my_core\vrf\logs_top\wave.vcd"
-[dumpfile_mtime] "Fri Aug 19 22:25:37 2022"
-[dumpfile_size] 9701937
+[dumpfile_mtime] "Sat Aug 20 09:54:09 2022"
+[dumpfile_size] 9929626
 [savefile] "D:\Projects\RISC-V\my_core\vrf\top.gtkw"
-[timestart] 156630
+[timestart] 776020
 [size] 1920 1017
 [pos] -9 -9
-*-11.082335 164501 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-11.082335 786501 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.top.
 [treeopen] TOP.top.u_rv.
@@ -30,8 +30,16 @@ TOP.top.u_rv.o_wb_adr[31:0]
 TOP.top.u_rv.o_wb_cyc
 TOP.top.u_rv.o_wb_stb
 TOP.top.u_rv.o_wb_we
-@22
+@c00022
 TOP.top.u_rv.o_wb_sel[3:0]
+@28
+(0)TOP.top.u_rv.o_wb_sel[3:0]
+(1)TOP.top.u_rv.o_wb_sel[3:0]
+(2)TOP.top.u_rv.o_wb_sel[3:0]
+(3)TOP.top.u_rv.o_wb_sel[3:0]
+@1401200
+-group_end
+@22
 TOP.top.u_rv.i_wb_dat[31:0]
 TOP.top.u_rv.o_wb_dat[31:0]
 @1000200
@@ -39,6 +47,7 @@ TOP.top.u_rv.o_wb_dat[31:0]
 @820
 TOP.top.u_rv.dbg_ascii_stage[127:0]
 TOP.top.u_rv.dbg_ascii_stage_next[127:0]
+TOP.top.u_rv.u_st2_decode.dbg_ascii_instr[127:0]
 @c00200
 -ST1_FETCH
 @28
@@ -54,10 +63,8 @@ TOP.top.u_rv.u_st1_fetch.w_fetch_pc_next[31:2]
 TOP.top.u_rv.u_st1_fetch.w_fetch_pc_p4[31:2]
 @1401200
 -ST1_FETCH
-@c00200
+@c00201
 -ST2_DECODE
-@820
-TOP.top.u_rv.u_st2_decode.dbg_ascii_instr[127:0]
 @28
 TOP.top.u_rv.u_st2_decode.i_stall
 TOP.top.u_rv.u_st2_decode.i_flush
@@ -84,7 +91,7 @@ TOP.top.u_rv.u_st2_decode.r_alu_op1_sel[1:0]
 TOP.top.u_rv.u_st2_decode.r_alu_op2_sel
 @22
 TOP.top.u_rv.u_st2_decode.w_alu_ctrl[5:0]
-@1401200
+@1401201
 -ST2_DECODE
 @c00200
 -ST3_EXEC
@@ -145,7 +152,7 @@ TOP.top.u_rv.u_st4_memory.r_res_src[1:0]
 TOP.top.u_rv.u_st4_memory.r_pc_target[31:2]
 @1401200
 -ST4_MEMORY
-@c00200
+@800200
 -ST5_WRITE
 @22
 TOP.top.u_rv.u_st5_write.r_data[31:0]
@@ -165,15 +172,18 @@ TOP.top.u_rv.u_st5_write.r_pc_target[31:2]
 TOP.top.u_rv.u_st5_write.r_data_byte[7:0]
 TOP.top.u_rv.u_st5_write.r_data_half_word[15:0]
 TOP.top.u_rv.u_st5_write.w_rdata[31:0]
+@28
+TOP.top.u_rv.u_st5_write.r_res_src[1:0]
+@22
 TOP.top.u_rv.u_st5_write.w_data[31:0]
-@1401200
+@1000200
 -ST5_WRITE
 @28
 TOP.top.u_rv.w_write_reg_write
 @22
 TOP.top.u_rv.w_write_rd[4:0]
 TOP.top.u_rv.w_write_data[31:0]
-@c00201
+@800200
 -REG FILE
 @22
 TOP.top.u_rv.r_reg_file[1][31:0]
@@ -207,7 +217,7 @@ TOP.top.u_rv.r_reg_file[28][31:0]
 TOP.top.u_rv.r_reg_file[29][31:0]
 TOP.top.u_rv.r_reg_file[30][31:0]
 TOP.top.u_rv.r_reg_file[31][31:0]
-@1401201
+@1000200
 -REG FILE
 [pattern_trace] 1
 [pattern_trace] 0

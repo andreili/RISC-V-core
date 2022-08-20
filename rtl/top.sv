@@ -42,7 +42,11 @@ module top
         .o_wb_cyc                       (w_wb_cyc)
     );
 
-    tcm u_tcm
+    tcm
+    #(
+        .MEM_ADDR_WIDTH                 (13)
+    )
+    u_tcm
     (
         .i_reset_n                      (i_reset_n),
         .i_clk                          (i_clk),

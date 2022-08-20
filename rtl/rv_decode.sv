@@ -201,7 +201,7 @@ module rv_decode
     always_comb
     begin
         case (1'b1)
-        |{w_inst_auipc,w_inst_jal,w_inst_lui,w_inst_imm}:
+        |{w_inst_auipc,w_inst_jal,w_inst_lui,w_inst_imm,w_inst_load,w_inst_store}:
             r_alu_op2_sel = `ALU_SRC_OP2_IMM;
         default:
             r_alu_op2_sel = `ALU_SRC_OP2_REG;

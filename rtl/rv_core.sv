@@ -69,6 +69,10 @@ module rv_core
     wire[31:2]  w_memory_pc_p4;
     wire[2:0]   w_memory_funct3;
     wire[31:2]  w_memory_pc_target;
+    wire        w_memory_mem_read;
+    wire        w_memory_mem_write;
+    wire[31:0]  w_memory_wdata;
+    wire[3:0]   w_memory_sel;
 
     wire[31:0]  w_write_data;
     wire[4:0]   w_write_rd;
@@ -183,7 +187,11 @@ module rv_core
         .o_rd                           (w_memory_rd),
         .o_pc_p4                        (w_memory_pc_p4),
         .o_funct3                       (w_memory_funct3),
-        .o_pc_target                    (w_memory_pc_target)
+        .o_pc_target                    (w_memory_pc_target),
+        .o_mem_write                    (w_memory_mem_write),
+        .o_mem_read                     (w_memory_mem_read),
+        .o_mem_sel                      (w_memory_sel),
+        .o_wdata                        (w_memory_wdata)
     );
 
     rv_write
@@ -249,49 +257,46 @@ module rv_core
     end
 
     reg     r_stb;
-    reg     r_stb_next;
-    assign r_stb_next = (r_stage_next == STAGE_FETCH) ? '1 :
-                        //(r_stage_next == STAGE_MEMORY) ? '1 :
-                        '0;
-    always_ff @(posedge i_clk)
+    always_comb
     begin
-        if (!i_reset_n)
-            r_stb <= '0;
-        else
-            r_stb <= r_stb_next;
+        case (r_stage)
+        STAGE_FETCH:    r_stb = '1;
+        STAGE_MEMORY:   r_stb = (w_memory_mem_write | w_memory_mem_read);
+        default:        r_stb = '0;
+        endcase
     end
 
     reg     r_cyc;
-    reg     r_cyc_next;
-    assign r_cyc_next = (r_stage_next == STAGE_FETCH) ? '1 :
-                        //(r_stage_next == STAGE_MEMORY) ? '1 :
-                        '0;
-    always_ff @(posedge i_clk)
+    always_comb
     begin
-        if (!i_reset_n)
-            r_cyc <= '0;
-        else
-            r_cyc <= r_cyc_next;
+        case (r_stage)
+        STAGE_FETCH:    r_cyc = '1;
+        STAGE_MEMORY:   r_cyc = (w_memory_mem_write | w_memory_mem_read);
+        default:        r_cyc = '0;
+        endcase
     end
 
     reg     r_we;
-    always_ff @(posedge i_clk)
-        r_we <= '0;//r_exec_mem_write;
+    always_comb
+    begin
+        case (r_stage)
+        STAGE_MEMORY:   r_we = w_memory_mem_write;
+        default:        r_we = '0;
+        endcase
+    end
 
     assign  w_fetch_stall = (r_stage != STAGE_FETCH);
 
 // WB BUS assignments
     wire[31:2]  w_addr_out;
-    //wire[31:0]  w_wr_data;
-    //wire[31:2]  w_pc_target;
 
-    assign w_addr_out = //(r_stage == STAGE_MEMORY)? r_memory_alu[31:2] : 
+    assign w_addr_out = (r_stage == STAGE_MEMORY)? w_memory_alu_result[31:2] : 
                         w_fetch_pc;
 
     assign  o_wb_adr = { w_addr_out, 2'b00 };
-    assign  o_wb_dat = '0;//r_memory_wdata_shuffled;
+    assign  o_wb_dat = w_memory_wdata;
     assign  o_wb_we = r_we;
-    assign  o_wb_sel = '1;//(r_stage == STAGE_MEMORY) ? r_memory_mem_sel : '1;
+    assign  o_wb_sel = (r_stage == STAGE_MEMORY) ? w_memory_sel : '1;
     assign  o_wb_stb = r_stb;
     assign  o_wb_cyc = r_cyc;
 

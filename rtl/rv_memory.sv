@@ -21,7 +21,11 @@ module rv_memory
     output  wire[4:0]                   o_rd,
     output  wire[31:2]                  o_pc_p4,
     output  wire[2:0]                   o_funct3,
-    output  wire[31:2]                  o_pc_target
+    output  wire[31:2]                  o_pc_target,
+    output  wire                        o_mem_write,
+    output  wire                        o_mem_read,
+    output  wire[3:0]                   o_mem_sel,
+    output  wire[31:0]                  o_wdata
 );
 
     reg[31:0]   r_alu;
@@ -88,5 +92,9 @@ module rv_memory
     assign  o_pc_p4 = r_pc_p4;
     assign  o_funct3 = r_funct3;
     assign  o_pc_target = r_pc_target;
+    assign  o_mem_write = r_write;
+    assign  o_mem_read = r_read;
+    assign  o_mem_sel = r_mem_sel;
+    assign  o_wdata = r_wdata_shuffled;
 
 endmodule

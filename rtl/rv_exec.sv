@@ -124,7 +124,7 @@ module rv_exec
         .o_zero                         (w_zero)
     );
 
-    assign  o_pc_src = (r_jump | (r_branch & w_zero));
+    assign  o_pc_src = (r_jump | (r_branch & (!w_zero)));
     assign  o_pc_target = r_pc + r_imm[31:2];
 
     assign  o_reg_write = r_reg_write;
