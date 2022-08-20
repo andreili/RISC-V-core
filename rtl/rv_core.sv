@@ -43,6 +43,7 @@ module rv_core
     wire        w_decode_mem_read;
     wire        w_decode_mem_write;
     wire[1:0]   w_decode_res_src;
+    wire        w_decode_pc_sel;
     wire        w_decode_jump;
     wire        w_decode_branch;
     wire[1:0]   w_decode_alu_op1_sel;
@@ -121,6 +122,7 @@ module rv_core
         .o_mem_read                     (w_decode_mem_read),
         .o_mem_write                    (w_decode_mem_write),
         .o_res_src                      (w_decode_res_src),
+        .o_pc_sel                       (w_decode_pc_sel),
         .o_jump                         (w_decode_jump),
         .o_branch                       (w_decode_branch),
         .o_alu_op1_sel                  (w_decode_alu_op1_sel),
@@ -147,6 +149,7 @@ module rv_core
         .i_mem_read                     (w_decode_mem_read),
         .i_mem_write                    (w_decode_mem_write),
         .i_res_src                      (w_decode_res_src),
+        .i_pc_sel                       (w_decode_pc_sel),
         .i_jump                         (w_decode_jump),
         .i_branch                       (w_decode_branch),
         .i_alu_op1_sel                  (w_decode_alu_op1_sel),
@@ -247,7 +250,7 @@ module rv_core
     begin : next_stage
         (* full_case *)
         case (r_stage)
-            STAGE_FETCH:    r_stage_next = (i_wb_ack) ? STAGE_DECODE : STAGE_FETCH;
+            STAGE_FETCH:    r_stage_next = /*(i_wb_ack) ? */STAGE_DECODE/* : STAGE_FETCH*/;
             STAGE_DECODE:   r_stage_next = STAGE_EXECUTE;
             STAGE_EXECUTE:  r_stage_next = STAGE_MEMORY;
             STAGE_MEMORY:   r_stage_next = /*(i_wb_ack) ?*/ STAGE_WRITE/* : STAGE_MEMORY*/;
@@ -290,7 +293,7 @@ module rv_core
 // WB BUS assignments
     wire[31:2]  w_addr_out;
 
-    assign w_addr_out = (r_stage == STAGE_MEMORY)? w_memory_alu_result[31:2] : 
+    assign w_addr_out = (r_stage == STAGE_MEMORY) ? w_memory_alu_result[31:2] : 
                         w_fetch_pc;
 
     assign  o_wb_adr = { w_addr_out, 2'b00 };

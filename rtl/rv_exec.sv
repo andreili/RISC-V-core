@@ -17,6 +17,7 @@ module rv_exec
     input   wire                        i_mem_read,
     input   wire                        i_mem_write,
     input   wire[1:0]                   i_res_src,
+    input   wire                        i_pc_sel,
     input   wire                        i_jump,
     input   wire                        i_branch,
     input   wire[1:0]                   i_alu_op1_sel,
@@ -53,6 +54,7 @@ module rv_exec
     reg         r_branch;
     reg[1:0]    r_alu_op1_sel;
     reg         r_alu_op2_sel;
+    reg         r_pc_sel;
     wire        w_zero;
     reg[2:0]    r_funct3;
     reg[5:0]    r_alu_ctrl;
@@ -79,6 +81,7 @@ module rv_exec
             r_alu_op2_sel <= '0;
             r_funct3 <= '0;
             r_alu_ctrl <= '0;
+            r_pc_sel <= '0;
         end
         else
         begin
@@ -100,6 +103,7 @@ module rv_exec
             r_alu_op2_sel <= i_alu_op2_sel;
             r_funct3 <= i_funct3;
             r_alu_ctrl <= i_alu_ctrl;
+            r_pc_sel <= i_pc_sel;
         end
     end
 
@@ -125,7 +129,8 @@ module rv_exec
     );
 
     assign  o_pc_src = (r_jump | (r_branch & (!w_zero)));
-    assign  o_pc_target = r_pc + r_imm[31:2];
+    wire[31:2]  w_pc = r_pc_sel ? r_rs1_val[31:2] : r_pc;
+    assign  o_pc_target = w_pc + r_imm[31:2];
 
     assign  o_reg_write = r_reg_write;
     assign  o_mem_read = r_mem_read;

@@ -20,6 +20,7 @@ module rv_decode
     output  wire                        o_mem_read,
     output  wire                        o_mem_write,
     output  wire[1:0]                   o_res_src,
+    output  wire                        o_pc_sel,
     output  wire                        o_jump,
     output  wire                        o_branch,
     output  wire[1:0]                   o_alu_op1_sel,
@@ -201,7 +202,7 @@ module rv_decode
     always_comb
     begin
         case (1'b1)
-        |{w_inst_auipc,w_inst_jal,w_inst_lui,w_inst_imm,w_inst_load,w_inst_store}:
+        |{w_inst_auipc,w_inst_jal,w_inst_jalr,w_inst_lui,w_inst_imm,w_inst_load,w_inst_store}:
             r_alu_op2_sel = `ALU_SRC_OP2_IMM;
         default:
             r_alu_op2_sel = `ALU_SRC_OP2_REG;
@@ -354,5 +355,6 @@ module rv_decode
     assign  o_alu_op2_sel = r_alu_op2_sel;
     assign  o_funct3 = w_funct3;
     assign  o_alu_ctrl = w_alu_ctrl;
+    assign  o_pc_sel = w_inst_jalr;
 
 endmodule

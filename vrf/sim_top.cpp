@@ -5,7 +5,7 @@ double sc_time_stamp() { return 0; }
 
 #define TICK_TIME 1000
 #define TICK_PERIOD (TICK_TIME / 2)
-#define SIM_TIME_MAX 1000
+#define SIM_TIME_MAX (1000*10)
 #define SIM_TIME_MAX_TICK (TICK_TIME * SIM_TIME_MAX)
 
 bool on_step_cb(uint64_t time, TOP_CLASS* p_top)
@@ -25,7 +25,7 @@ int main(int argc, char** argv, char** env)
 
     // wait for reset
     top->i_reset_n = 0;
-    tb->run_steps(4 * TICK_TIME);
+    tb->run_steps(20 * TICK_TIME);
     top->i_reset_n = 1;
 
     tb->run_steps(SIM_TIME_MAX * TICK_TIME);
