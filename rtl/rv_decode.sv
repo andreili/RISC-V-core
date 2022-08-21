@@ -6,7 +6,7 @@ module rv_decode
     input   wire                        i_reset_n,
     input   wire                        i_stall,
     input   wire                        i_flush,
-    input   wire                        i_bus_ack,
+    //input   wire                        i_bus_ack,
     input   wire[31:0]                  i_data,
     input   wire[31:2]                  i_pc,
     input   wire[31:2]                  i_pc_p4,
@@ -31,7 +31,7 @@ module rv_decode
 
 `include "rv_defines.vh"
 
-    reg[31:0]   r_instr;
+    //reg[31:0]   r_instr;
     reg[31:2]   r_pc;
     reg[31:2]   r_pc_p4;
 
@@ -61,20 +61,26 @@ module rv_decode
         end
     end
 
+    // staged core workarround
+    reg         r_flush;
+    wire[31:0]  w_data = r_flush ? '0 : i_data;
     always_ff @(posedge i_clk)
+    r_flush <= i_flush;
+
+    /*always_ff @(posedge i_clk)
     begin
         if ((!i_reset_n) || i_flush)
             r_instr <= '0;
-        else if ((!i_stall) && i_bus_ack)
+        else if ((!i_stall))
             r_instr <= i_data;
-    end
+    end*/
 
-    assign      w_op             = r_instr[6:0];
-    assign      w_rd             = r_instr[11:7];
-    assign      w_funct3         = r_instr[14:12];
-    assign      w_rs1            = r_instr[19:15];
-    assign      w_rs2            = r_instr[24:20];
-    assign      w_funct7         = r_instr[31:25];
+    assign      w_op             = w_data[6:0];
+    assign      w_rd             = w_data[11:7];
+    assign      w_funct3         = w_data[14:12];
+    assign      w_rs1            = w_data[19:15];
+    assign      w_rs2            = w_data[24:20];
+    assign      w_funct7         = w_data[31:25];
 
     wire    w_inst_supported;
     wire    w_inst_lb, w_inst_lh, w_inst_lw, w_inst_lbu, w_inst_lhu;
@@ -172,15 +178,15 @@ module rv_decode
     begin
         case (1'b1)
         w_inst_jal:
-            w_imm = { {12{r_instr[31]}}, r_instr[19:12], r_instr[20], r_instr[30:21], 1'b0 };
+            w_imm = { {12{w_data[31]}}, w_data[19:12], w_data[20], w_data[30:21], 1'b0 };
         |{w_inst_lui, w_inst_auipc}:
-            w_imm = { r_instr[31:12], {12{1'b0}} };
+            w_imm = { w_data[31:12], {12{1'b0}} };
         |{w_inst_jalr, w_inst_load, w_inst_imm}:
-            w_imm = { {21{r_instr[31]}}, r_instr[30:20] };
+            w_imm = { {21{w_data[31]}}, w_data[30:20] };
         w_inst_branch:
-            w_imm = { {20{r_instr[31]}}, r_instr[7], r_instr[30:25], r_instr[11:8], 1'b0 };
+            w_imm = { {20{w_data[31]}}, w_data[7], w_data[30:25], w_data[11:8], 1'b0 };
         w_inst_store:
-            w_imm = { {21{r_instr[31]}}, r_instr[30:25], r_instr[11:7] };
+            w_imm = { {21{w_data[31]}}, w_data[30:25], w_data[11:7] };
         default:w_imm = 'x;
         endcase
     end
@@ -267,6 +273,7 @@ module rv_decode
         endcase
     end
 
+`ifdef TO_SIM
 	reg [127:0] dbg_ascii_alu_ctrl;
 	always @* begin
 		dbg_ascii_alu_ctrl = "";
@@ -338,6 +345,7 @@ module rv_decode
 		if (w_inst_or)       dbg_ascii_instr = "or";
 		if (w_inst_and)      dbg_ascii_instr = "and";
 	end
+`endif
 
     assign  o_rs1 = w_rs1;
     assign  o_rs2 = w_rs2;

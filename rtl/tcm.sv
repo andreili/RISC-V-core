@@ -6,81 +6,65 @@ module tcm
     parameter   MEM_ADDR_WIDTH          = 8
 )
 (
-    input   wire                        i_reset_n,
     input   wire                        i_clk,
-    input   wire                        i_sel,
-    input   wire[31:0]                  i_wb_addr,
-    input   wire                        i_wb_stb,
-    input   wire                        i_wb_cyc,
-    input   wire                        i_wb_we,
-    input   wire[3:0]                   i_wb_sel,
-    input   wire[31:0]                  i_wb_wdata,
-    output  wire                        o_wb_ack,
-    output  wire[31:0]                  o_wb_rdata
+    //
+    input   wire[(MEM_ADDR_WIDTH+1):2]  i_inst_addr,
+    output  wire[31:0]                  o_inst,
+    //
+    input   wire                        i_data_sel,
+    input   wire[(MEM_ADDR_WIDTH+1):2]  i_data_addr,
+    input   wire                        i_data_write,
+    input   wire[3:0]                   i_data_mask,
+    input   wire[31:0]                  i_data,
+    output  wire[31:0]                  o_data
 );
 
-//`define OUT_REG
+`define OUT_REG
 
     localparam  MEM_SIZE = 2 ** MEM_ADDR_WIDTH;
 
-    wire[(MEM_ADDR_WIDTH)-1:0]  w_addr;
-    reg[31:0]   r_mem[(MEM_SIZE-1):0];
-    reg[31:0]   r_out;
-    reg         r_ack;
-    reg         r_prev;
-    wire        w_cur;
-    wire        w_rise_edge;
-
-`ifdef OUT_REG
-    assign w_cur = i_wb_stb & i_wb_cyc;
-    always_ff @(posedge i_clk)
-    begin
-        if (!i_reset_n)
-            r_prev <= '0;
-        else
-            r_prev <= w_cur;
-    end
-    assign w_rise_edge = w_cur && (!r_prev);
-`endif
-
-    assign w_addr = i_wb_addr[2 +: MEM_ADDR_WIDTH];
-
-    always_ff @(posedge i_clk)
-    begin
-        if ((i_wb_we == '1) & i_wb_stb & i_wb_cyc & i_wb_sel[0])
-            r_mem[w_addr][0+:8] <= i_wb_wdata[0+:8];
-        if ((i_wb_we == '1) & i_wb_stb & i_wb_cyc & i_wb_sel[1])
-            r_mem[w_addr][8+:8] <= i_wb_wdata[8+:8];
-        if ((i_wb_we == '1) & i_wb_stb & i_wb_cyc & i_wb_sel[2])
-            r_mem[w_addr][16+:8] <= i_wb_wdata[16+:8];
-        if ((i_wb_we == '1) & i_wb_stb & i_wb_cyc & i_wb_sel[3])
-            r_mem[w_addr][24+:8] <= i_wb_wdata[24+:8];
-    end
-
-`ifdef OUT_REG
-    always_ff @(posedge i_clk)
-    begin
-        if (i_wb_stb & i_wb_cyc & i_wb_sel[0])
-            r_out[0+:8] <= r_mem[w_addr][0+:8];
-        if (i_wb_stb & i_wb_cyc & i_wb_sel[1])
-            r_out[8+:8] <= r_mem[w_addr][8+:8];
-        if (i_wb_stb & i_wb_cyc & i_wb_sel[2])
-            r_out[16+:8] <= r_mem[w_addr][16+:8];
-        if (i_wb_stb & i_wb_cyc & i_wb_sel[3])
-            r_out[24+:8] <= r_mem[w_addr][24+:8];
-    end
-
-    always_ff @(posedge i_clk)
-        r_ack <= w_rise_edge;
-
-    assign o_wb_rdata = r_out;
-    assign o_wb_ack = r_ack;
+`ifdef QUARTUS
+    reg[3:0][7:0]r_mem[MEM_SIZE];
 `else
-    assign o_wb_ack = i_wb_stb & i_wb_cyc;
-    assign o_wb_rdata[ 0+:8] = r_mem[w_addr][ 0+:8];
-    assign o_wb_rdata[ 8+:8] = r_mem[w_addr][ 8+:8];
-    assign o_wb_rdata[16+:8] = r_mem[w_addr][16+:8];
-    assign o_wb_rdata[24+:8] = r_mem[w_addr][24+:8];
+    reg[31:0]   r_mem[MEM_SIZE];
+`endif
+    reg[31:0]   r_inst_out;
+    reg[31:0]   r_data_out;
+
+    always_ff @(posedge i_clk)
+    begin
+        if (i_data_write & i_data_sel)
+        begin
+        `ifdef QUARTUS
+            if (i_data_mask[0]) r_mem[i_data_addr][0] <= i_data[ 0+:8];
+            if (i_data_mask[1]) r_mem[i_data_addr][1] <= i_data[ 8+:8];
+            if (i_data_mask[2]) r_mem[i_data_addr][2] <= i_data[16+:8];
+            if (i_data_mask[3]) r_mem[i_data_addr][3] <= i_data[24+:8];
+        `else
+            if (i_data_mask[0]) r_mem[i_data_addr][ 0+:8] <= i_data[ 0+:8];
+            if (i_data_mask[1]) r_mem[i_data_addr][ 8+:8] <= i_data[ 8+:8];
+            if (i_data_mask[2]) r_mem[i_data_addr][16+:8] <= i_data[16+:8];
+            if (i_data_mask[3]) r_mem[i_data_addr][24+:8] <= i_data[24+:8];
+        `endif
+        end
+    end
+
+`ifdef OUT_REG
+    always_ff @(posedge i_clk)
+    begin
+        r_inst_out <= r_mem[i_inst_addr];
+    end
+
+    always_ff @(posedge i_clk)
+    begin
+        r_data_out <= r_mem[i_data_addr];
+    end
+
+    assign o_inst = r_inst_out;
+    assign o_data = r_data_out;
+`else
+    assign o_inst = r_mem[i_inst_addr];
+    assign o_data = r_mem[i_data_addr];
 `endif
 
     initial begin

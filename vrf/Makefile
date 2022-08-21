@@ -35,7 +35,7 @@ default: top
 rv%:
 	@echo "--- Prepare test $@ ---"
 	@rm -rf logs logs_$@ obj_dir
-	$(VERILATOR) $(VERILATOR_FLAGS) -CFLAGS "-I../tb/ -DTOP_NAME=$@" -f input.vc $@.sv tb/tb.cpp tb_$@.cpp
+	$(VERILATOR) $(VERILATOR_FLAGS) -CFLAGS "-I../tb/ -DTOP_NAME=$@" -DTO_SIM -f input.vc $@.sv tb/tb.cpp tb_$@.cpp
 	@mkdir -p logs_$@
 	@echo "--- Run test $@ ---"
 	@obj_dir/V$@ +trace || (exit 1)
@@ -45,7 +45,7 @@ rv%:
 
 top:
 	@rm -rf logs logs_$@ obj_dir
-	@$(VERILATOR) $(VERILATOR_FLAGS) -CFLAGS "-I../tb/ -DTOP_NAME=$@" -f input.vc $@.sv tb/tb.cpp sim_$@.cpp
+	@$(VERILATOR) $(VERILATOR_FLAGS) -CFLAGS "-I../tb/ -DTOP_NAME=$@" -DTO_SIM -f input.vc $@.sv tb/tb.cpp sim_$@.cpp
 	@mkdir -p logs_$@
 	obj_dir/Vtop +trace || (exit 1)
 #	@rm -rf obj_dir logs

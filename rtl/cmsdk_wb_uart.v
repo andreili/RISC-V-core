@@ -58,12 +58,12 @@ module cmsdk_wb_uart (
     input   wire                        i_reset_n,         // Reset
 
     input   wire                        i_dev_sel,
-    input   wire[31:0]                  i_wb_adr,
+    input   wire[11:2]                  i_wb_adr,
     output  wire[31:0]                  o_wb_dat,
-    input   wire[31:0]                  i_wb_dat,
+    input   wire[19:0]                  i_wb_dat,
     input   wire                        i_wb_we,
-    input   wire[3:0]                   i_wb_sel,
-    input   wire                        i_wb_stb,
+    //input   wire[3:0]                   i_wb_sel,
+    //input   wire                        i_wb_stb,
     output  wire                        o_wb_ack,
     input   wire                        i_wb_cyc,
 
@@ -84,7 +84,6 @@ wire          write_enable08; // Write enable for control register
 wire          write_enable0c; // Write enable for interrupt status register
 wire          write_enable10; // Write enable for Baud rate divider
 reg     [7:0] read_mux_byte0; // Read data multiplexer for lower 8-bit
-reg     [7:0] read_mux_byte0_reg; // Register read data for lower 8-bit
 wire   [31:0] read_mux_word;  // Read data multiplexer for whole 32-bit
 
 // Signals for Control registers
@@ -245,19 +244,8 @@ assign  write_enable10 = write_enable & (i_wb_adr[11:2] == 10'h004);
     end
   end
 
-
-
-  // Register read data
-  always @(posedge i_clk)
-  begin
-    if (~i_reset_n)
-      read_mux_byte0_reg      <= {8{1'b0}};
-    else if (read_enable)
-      read_mux_byte0_reg      <= read_mux_byte0;
-  end
-
   // Second level of read mux
-  assign read_mux_word[ 7: 0] = read_mux_byte0_reg;
+  assign read_mux_word[ 7: 0] = read_mux_byte0;
   assign read_mux_word[19: 8] = (i_wb_adr[11:2]==10'h004) ? reg_baud_div[19:8] : {12{1'b0}};
   assign read_mux_word[31:20] = {12{1'b0}};
 
@@ -685,7 +673,7 @@ assign  write_enable10 = write_enable & (i_wb_adr[11:2] == 10'h004);
    reg          ovl_last_psel;
    reg          ovl_last_penable;
    reg          ovl_last_pwrite;
-   reg  [31:0]  ovl_last_pwdata;
+   reg  [19:0]  ovl_last_pwdata;
    reg  [11:2]  ovl_last_paddr;
    reg          ovl_last_rx_buf_full;
    reg          ovl_last_tx_shift_buf_0;
@@ -701,7 +689,7 @@ assign  write_enable10 = write_enable & (i_wb_adr[11:2] == 10'h004);
        ovl_last_penable <= 1'b0;
        ovl_last_pwrite  <= 1'b0;
        ovl_last_paddr   <= {10{1'b0}};
-       ovl_last_pwdata  <= {32{1'b0}};
+       ovl_last_pwdata  <= {20{1'b0}};
        ovl_last_rx_buf_full  <= 1'b0;
        ovl_last_tx_shift_buf_0 <= 1'b0;
        end

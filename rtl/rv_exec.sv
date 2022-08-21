@@ -3,14 +3,14 @@
 module rv_exec
 (
     input   wire                        i_clk,
-    input   wire                        i_reset_n,
+    //input   wire                        i_reset_n,
     input   wire                        i_flush,
     input   wire[31:2]                  i_pc,
     input   wire[31:2]                  i_pc_p4,
     input   wire[31:0]                  i_rs1_val,
     input   wire[31:0]                  i_rs2_val,
-    input   wire[4:0]                   i_rs1,
-    input   wire[4:0]                   i_rs2,
+    //input   wire[4:0]                   i_rs1,
+    //input   wire[4:0]                   i_rs2,
     input   wire[4:0]                   i_rd,
     input   wire[31:0]                  i_imm,
     input   wire                        i_reg_write,
@@ -42,8 +42,8 @@ module rv_exec
     reg[31:2]   r_pc_p4;
     reg[31:0]   r_rs1_val;
     reg[31:0]   r_rs2_val;
-    reg[4:0]    r_rs1;
-    reg[4:0]    r_rs2;
+    //reg[4:0]    r_rs1;
+    //reg[4:0]    r_rs2;
     reg[4:0]    r_rd;
     reg[31:0]   r_imm;
     reg         r_reg_write;
@@ -67,8 +67,8 @@ module rv_exec
             r_pc_p4 <= '0;
             r_rs1_val <= '0;
             r_rs2_val <= '0;
-            r_rs1 <= '0;
-            r_rs2 <= '0;
+            //r_rs1 <= '0;
+            //r_rs2 <= '0;
             r_rd <= '0;
             r_imm <= '0;
             r_mem_read <= '0;
@@ -89,8 +89,8 @@ module rv_exec
             r_pc_p4 <= i_pc_p4;
             r_rs1_val <= i_rs1_val;
             r_rs2_val <= i_rs2_val;
-            r_rs1 <= i_rs1;
-            r_rs2 <= i_rs2;
+            //r_rs1 <= i_rs1;
+            //r_rs2 <= i_rs2;
             r_rd <= i_rd;
             r_imm <= i_imm;
             r_reg_write <= i_reg_write;

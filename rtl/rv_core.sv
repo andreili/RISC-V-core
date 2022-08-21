@@ -1,5 +1,7 @@
 `timescale 1 ns / 1 ps
 
+`include "rv_defines.vh"
+
 module rv_core
 #(
     parameter   RESET_ADDR = 32'h0000_0000
@@ -15,7 +17,13 @@ module rv_core
     output  wire[3:0]                   o_wb_sel,
     output  wire                        o_wb_stb,
     input   wire                        i_wb_ack,
-    output  wire                        o_wb_cyc
+    output  wire                        o_wb_cyc,
+    //
+    output  wire[(`TCM_ADDR_WIDTH+1):2] o_inst_addr,
+    input   wire[31:0]                  i_inst,
+    output  wire                        o_data_sel,
+    output  wire[(`TCM_ADDR_WIDTH+1):2] o_data_addr,
+    input   wire[31:0]                  i_memory_data
 );
 
     localparam  STAGE_FETCH             = 3'h1;
@@ -27,9 +35,10 @@ module rv_core
     wire    w_fetch_stall;
     wire    w_decode_stall = 1'b0;
     wire    w_decode_flush;
-    reg         r_write_pc_src = '0;
-    reg[31:2]   r_write_pc_target = '0;
     wire    w_exec_flush = 1'b0;
+
+    reg[2:0]    r_stage;
+    reg[2:0]    r_stage_next;
 
     wire[31:2]  w_fetch_pc;
     wire[31:2]  w_fetch_pc_p4;
@@ -91,11 +100,9 @@ module rv_core
     (
         .i_clk                          (i_clk),
         .i_reset_n                      (i_reset_n),
-        .i_stall                        (w_fetch_stall),
+        //.i_stall                        (w_fetch_stall),
         .i_pc_sel                       (w_exec_pc_src),
         .i_pc_target                    (w_exec_pc_target),
-        .i_bus_ack                      (i_wb_ack),
-        .i_bus_rdata                    (i_wb_dat),
         .i_pre_stall                    (w_pre_stall),
         .o_pc                           (w_fetch_pc),
         .o_pc_p4                        (w_fetch_pc_p4)
@@ -108,8 +115,8 @@ module rv_core
         .i_reset_n                      (i_reset_n),
         .i_stall                        (w_decode_stall),
         .i_flush                        (w_decode_flush),
-        .i_bus_ack                      (i_wb_ack),
-        .i_data                         (i_wb_dat),
+        //.i_bus_ack                      (i_wb_ack),
+        .i_data                         (i_inst),
         .i_pc                           (w_fetch_pc),
         .i_pc_p4                        (w_fetch_pc_p4),
         .o_rs1                          (w_decode_rs1),
@@ -135,14 +142,14 @@ module rv_core
     u_st3_exec
     (
         .i_clk                          (i_clk),
-        .i_reset_n                      (i_reset_n),
+        //.i_reset_n                      (i_reset_n),
         .i_flush                        (w_exec_flush),
         .i_pc                           (w_decode_pc),
         .i_pc_p4                        (w_decode_pc_p4),
         .i_rs1_val                      (w_reg_data1),
         .i_rs2_val                      (w_reg_data2),
-        .i_rs1                          (w_decode_rs1),
-        .i_rs2                          (w_decode_rs2),
+        //.i_rs1                          (w_decode_rs1),
+        //.i_rs2                          (w_decode_rs2),
         .i_rd                           (w_decode_rd),
         .i_imm                          (w_decode_imm),
         .i_reg_write                    (w_decode_reg_write),
@@ -173,7 +180,7 @@ module rv_core
     u_st4_memory
     (
         .i_clk                          (i_clk),
-        .i_reset_n                      (i_reset_n),
+        //.i_reset_n                      (i_reset_n),
         .i_alu_result                   (w_exec_alu_result),
         .i_reg_write                    (w_exec_reg_write),
         .i_mem_read                     (w_exec_mem_read),
@@ -197,18 +204,22 @@ module rv_core
         .o_wdata                        (w_memory_wdata)
     );
 
+    assign  o_data_sel = (w_memory_alu_result[`SLAVE_SEL_FROM:`SLAVE_SEL_TO] == `TCM_ADDR_SEL);
+    assign  o_data_addr = w_memory_alu_result[(`TCM_ADDR_WIDTH+1):2];
+
     rv_write
     u_st5_write
     (
         .i_clk                          (i_clk),
-        .i_reset_n                      (i_reset_n),
+        //.i_reset_n                      (i_reset_n),
         .i_data                         (i_wb_dat),
+        .i_memory_data                  (i_memory_data),
         .i_alu_result                   (w_memory_alu_result),
         .i_reg_write                    (w_memory_reg_write),
         .i_rd                           (w_memory_rd),
         .i_res_src                      (w_memory_res_src),
         .i_pc_p4                        (w_memory_pc_p4),
-        .i_pc_target                    (w_memory_pc_target),
+        //.i_pc_target                    (w_memory_pc_target),
         .i_funct3                       (w_memory_funct3),
         .o_data                         (w_write_data),
         .o_rd                           (w_write_rd),
@@ -216,7 +227,7 @@ module rv_core
     );
 
     //regfile
-    reg[31:0]   r_reg_file[31:1];
+    (* ramstyle = "M10K" *) reg[31:0]   r_reg_file[31:1];
 
     assign w_reg_data1 = (|w_decode_rs1) ? r_reg_file[w_decode_rs1] : '0;
     assign w_reg_data2 = (|w_decode_rs2) ? r_reg_file[w_decode_rs2] : '0;
@@ -226,17 +237,6 @@ module rv_core
         if (i_reset_n && w_write_reg_write && (|w_write_rd))
             r_reg_file[w_write_rd] <= w_write_data;
     end
-
-`ifdef FGFGFFF
-
-/* ---- DECODE MODULE --- */
-
-    assign  w_pc_target = w_fetch_pc + w_decode_imm[31:2];
-/* --------------------- */
-`endif
-
-    reg[2:0]    r_stage;
-    reg[2:0]    r_stage_next;
 
     always_ff @(posedge i_clk)
     begin
@@ -248,7 +248,6 @@ module rv_core
 
     always_comb
     begin : next_stage
-        (* full_case *)
         case (r_stage)
             STAGE_FETCH:    r_stage_next = /*(i_wb_ack) ? */STAGE_DECODE/* : STAGE_FETCH*/;
             STAGE_DECODE:   r_stage_next = STAGE_EXECUTE;
@@ -291,18 +290,16 @@ module rv_core
     assign  w_fetch_stall = (r_stage != STAGE_FETCH);
 
 // WB BUS assignments
-    wire[31:2]  w_addr_out;
-
-    assign w_addr_out = (r_stage == STAGE_MEMORY) ? w_memory_alu_result[31:2] : 
-                        w_fetch_pc;
-
-    assign  o_wb_adr = { w_addr_out, 2'b00 };
+    assign  o_wb_adr = w_memory_alu_result;
     assign  o_wb_dat = w_memory_wdata;
     assign  o_wb_we = r_we;
-    assign  o_wb_sel = (r_stage == STAGE_MEMORY) ? w_memory_sel : '1;
+    assign  o_wb_sel = w_memory_sel;
     assign  o_wb_stb = r_stb;
     assign  o_wb_cyc = r_cyc;
 
+    assign  o_inst_addr = w_fetch_pc[(`TCM_ADDR_WIDTH+1):2];
+
+`ifdef TO_SIM
 // DEBUG
     reg [127:0] dbg_ascii_stage, dbg_ascii_stage_next;
 
@@ -329,4 +326,7 @@ initial begin
     r_reg_file[2] = 0;
     r_reg_file[3] = 0;
 end
+
+`endif
+
 endmodule

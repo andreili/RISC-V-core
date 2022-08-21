@@ -3,7 +3,7 @@
 module rv_memory
 (
     input   wire                        i_clk,
-    input   wire                        i_reset_n,
+    //input   wire                        i_reset_n,
 
     input   wire[31:0]                  i_alu_result,
     input   wire                        i_reg_write,
@@ -85,9 +85,13 @@ module rv_memory
         endcase
     end
 
+    wire[1:0]   w_res_src;
+
+    assign  w_res_src = (r_read & (r_alu[`SLAVE_SEL_FROM:`SLAVE_SEL_TO] == `TCM_ADDR_SEL)) ? `RESULT_SRC_TCM : r_res_src;
+
     assign  o_alu_result = r_alu;
     assign  o_reg_write = r_reg_write;
-    assign  o_res_src = r_res_src;
+    assign  o_res_src = w_res_src;
     assign  o_rd = r_rd;
     assign  o_pc_p4 = r_pc_p4;
     assign  o_funct3 = r_funct3;
