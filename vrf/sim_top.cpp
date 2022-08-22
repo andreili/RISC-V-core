@@ -4,7 +4,7 @@
 double sc_time_stamp() { return 0; }
 
 #define TICK_TIME 1000
-#define TICK_PERIOD (TICK_TIME / 2)
+#define TICK_PERIOD (TICK_TIME / 10)
 #define SIM_TIME_MAX (1000*10)
 #define SIM_TIME_MAX_TICK (TICK_TIME * SIM_TIME_MAX)
 
@@ -28,7 +28,17 @@ int main(int argc, char** argv, char** env)
     tb->run_steps(20 * TICK_TIME);
     top->i_reset_n = 1;
 
-    tb->run_steps(SIM_TIME_MAX * TICK_TIME);
+    int ret = -1;
+    for (int i=0 ; i<SIM_TIME_MAX ; ++i)
+    {
+        tb->run_steps(TICK_TIME);
+        if ((top->o_x1 == 0xa5a5a5a5) & (top->o_x2 == 0x5a5a5a5a))
+        {
+            ret = 0;
+            printf("Test finished. Ok.\n");
+            break;
+        }
+    }
 
     tb->finish();
     top->final();

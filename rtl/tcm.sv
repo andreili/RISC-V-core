@@ -67,8 +67,13 @@ module tcm
     assign o_data = r_mem[i_data_addr];
 `endif
 
-    initial begin
-        $readmemh("../vrf/test_fw/out/risc.vh", r_mem);
+    initial
+    begin
+        string fw_file;
+        if ($value$plusargs("TEST_FW=%s", fw_file))
+            $readmemh(fw_file, r_mem);
+        else
+            $readmemh("../vrf/test_fw/out/risc.vh", r_mem);
     end
 
 endmodule

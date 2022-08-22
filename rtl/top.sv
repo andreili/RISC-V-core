@@ -4,6 +4,10 @@ module top
 (
     input   wire                        i_clk,
     input   wire                        i_reset_n,
+`ifdef TO_SIM
+    output  wire[31:0]                  o_x1,
+    output  wire[31:0]                  o_x2,
+`endif
     input   wire                        i_rx,
     output  wire                        o_tx
 );
@@ -68,6 +72,10 @@ module top
     (
         .i_clk                          (w_clk),
         .i_reset_n                      (w_reset_n),
+    `ifdef TO_SIM
+        .o_x1                           (o_x1),
+        .o_x2                           (o_x2),
+    `endif
         .o_wb_adr                       (w_wb_addr),
         .o_wb_dat                       (w_wb_wdata),
         .i_wb_dat                       (w_wb_rdata),

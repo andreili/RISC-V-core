@@ -9,6 +9,10 @@ module rv_core
 (
     input   wire                        i_clk,
     input   wire                        i_reset_n,
+`ifdef TO_SIM
+    output  wire[31:0]                  o_x1,
+    output  wire[31:0]                  o_x2,
+`endif
     //
     output  wire[31:0]                  o_wb_adr,
     output  wire[31:0]                  o_wb_dat,
@@ -320,6 +324,11 @@ module rv_core
         if (r_stage_next == STAGE_MEMORY)  dbg_ascii_stage_next = "memory";
         if (r_stage_next == STAGE_WRITE)   dbg_ascii_stage_next = "write";
     end
+
+`ifdef TO_SIM
+    assign  o_x1 = r_reg_file[1];
+    assign  o_x2 = r_reg_file[2];
+`endif
 
 initial begin
     r_reg_file[1] = 0;
