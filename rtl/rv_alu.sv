@@ -52,7 +52,7 @@ module rv_alu
         `ALU_CTRL_AND: r_out = w_and;
         `ALU_CTRL_SHL: r_out = w_shl;
         `ALU_CTRL_SHR: r_out = w_shr[31:0];
-        `ALU_CTRL_CMP: r_out = { 32{r_compare} };
+        `ALU_CTRL_CMP: r_out = { {31{1'b0}}, r_compare };
         endcase
     end
 

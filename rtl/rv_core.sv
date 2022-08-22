@@ -63,6 +63,7 @@ module rv_core
     wire        w_decode_alu_op2_sel;
     wire[2:0]   w_decode_funct3;
     wire[5:0]   w_decode_alu_ctrl;
+    wire        w_decode_inv_instr;
 
     wire[2:0]   w_exec_funct3;
     wire[31:0]  w_exec_alu_result;
@@ -139,7 +140,8 @@ module rv_core
         .o_alu_op1_sel                  (w_decode_alu_op1_sel),
         .o_alu_op2_sel                  (w_decode_alu_op2_sel),
         .o_funct3                       (w_decode_funct3),
-        .o_alu_ctrl                     (w_decode_alu_ctrl)
+        .o_alu_ctrl                     (w_decode_alu_ctrl),
+        .o_inv_instr                    (w_decode_inv_instr)
     );
 
     rv_exec
@@ -254,7 +256,7 @@ module rv_core
     begin : next_stage
         case (r_stage)
             STAGE_FETCH:    r_stage_next = /*(i_wb_ack) ? */STAGE_DECODE/* : STAGE_FETCH*/;
-            STAGE_DECODE:   r_stage_next = STAGE_EXECUTE;
+            STAGE_DECODE:   r_stage_next = w_decode_inv_instr ? STAGE_DECODE : STAGE_EXECUTE;
             STAGE_EXECUTE:  r_stage_next = STAGE_MEMORY;
             STAGE_MEMORY:   r_stage_next = /*(i_wb_ack) ?*/ STAGE_WRITE/* : STAGE_MEMORY*/;
             STAGE_WRITE:    r_stage_next = STAGE_FETCH;

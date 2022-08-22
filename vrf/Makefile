@@ -68,11 +68,9 @@ obj_dir/Vtop:
 	@$(VERILATOR) $(VERILATOR_FLAGS) -CFLAGS "-I../tb/ -DTOP_NAME=top" -DTO_SIM -f input.vc top.sv tb/tb.cpp sim_top.cpp
 
 test_%: $(work_dir_isa)/%.vh obj_dir/Vtop
-	@obj_dir/Vtop +trace +TEST_FW=$<
-	@if [ $$? -ne 0 ] ; then echo "$@ FAILED" ; exit 1 ; fi
+	@obj_dir/Vtop +trace +TEST_FW=$< && ([ $$? -eq 0 ] && echo "$@ success!") || (echo "$@ failure!" && gtkwave -a top.gtkw -6 -7 logs_top/wave.vcd && exit 1)
 	@mv logs_top/wave.vcd $@.vcd
 	@rm -rf logs_top
-#	gtkwave -a top.gtkw -6 -7 $@.vcd
 
 tests_ls = $(addprefix test_,$(tests_name))
 

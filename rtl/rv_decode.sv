@@ -26,7 +26,8 @@ module rv_decode
     output  wire[1:0]                   o_alu_op1_sel,
     output  wire                        o_alu_op2_sel,
     output  wire[2:0]                   o_funct3,
-    output  wire[5:0]                   o_alu_ctrl
+    output  wire[5:0]                   o_alu_ctrl,
+    output  wire                        o_inv_instr
 );
 
 `include "rv_defines.vh"
@@ -95,6 +96,8 @@ module rv_decode
     wire    w_inst_jalr;
     wire    w_inst_jal;
 
+    wire    w_inst_fence, w_inst_fence_i;
+
     wire    w_inst_load;
     wire    w_inst_store;
     wire    w_inst_imm;
@@ -112,7 +115,8 @@ module rv_decode
             w_inst_lui   |
             w_inst_beq   | w_inst_bne  | w_inst_blt  | w_inst_bge   | w_inst_bltu | w_inst_bgeu |
             w_inst_jalr  |
-            w_inst_jal;
+            w_inst_jal   |
+            w_inst_fence | w_inst_fence_i;
 
     // memory read operations
     assign  w_inst_lb       = (w_op == 7'b0000011) & (w_funct3 == 3'b000);
@@ -165,6 +169,10 @@ module rv_decode
     // jumps
     assign  w_inst_jalr     = (w_op == 7'b1100111) & (w_funct3 == 3'b000);
     assign  w_inst_jal      = (w_op == 7'b1101111);
+
+    // fence
+    assign  w_inst_fence    = (w_op == 7'b0001111) & (w_funct3 == 3'b000);
+    assign  w_inst_fence_i  = (w_op == 7'b0001111) & (w_funct3 == 3'b001);
 
     assign  w_inst_load = w_inst_lb | w_inst_lh | w_inst_lw | w_inst_lbu | w_inst_lhu;
     assign  w_inst_store = w_inst_sb | w_inst_sh | w_inst_sw;
@@ -344,6 +352,9 @@ module rv_decode
 		if (w_inst_sra)      dbg_ascii_instr = "sra";
 		if (w_inst_or)       dbg_ascii_instr = "or";
 		if (w_inst_and)      dbg_ascii_instr = "and";
+        
+		if (w_inst_fence)    dbg_ascii_instr = "fence";
+		if (w_inst_fence_i)  dbg_ascii_instr = "fence.i";
 	end
 `endif
 
@@ -364,5 +375,6 @@ module rv_decode
     assign  o_funct3 = w_funct3;
     assign  o_alu_ctrl = w_alu_ctrl;
     assign  o_pc_sel = w_inst_jalr;
+    assign  o_inv_instr = !w_inst_supported;
 
 endmodule

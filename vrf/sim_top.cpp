@@ -35,7 +35,6 @@ int main(int argc, char** argv, char** env)
         if ((top->o_x1 == 0xa5a5a5a5) & (top->o_x2 == 0x5a5a5a5a))
         {
             ret = 0;
-            printf("Test finished. Ok.\n");
             break;
         }
     }
@@ -45,5 +44,5 @@ int main(int argc, char** argv, char** env)
 #if VM_COVERAGE
     //tb->get_context()->coveragep()->write(COV_FN);
 #endif
-    return 0;
+    return ret;
 }
