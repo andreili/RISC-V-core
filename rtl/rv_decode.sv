@@ -26,7 +26,7 @@ module rv_decode
     output  wire[1:0]                   o_alu_op1_sel,
     output  wire                        o_alu_op2_sel,
     output  wire[2:0]                   o_funct3,
-    output  wire[5:0]                   o_alu_ctrl,
+    output  wire[4:0]                   o_alu_ctrl,
     output  wire                        o_inv_instr
 );
 
@@ -235,49 +235,39 @@ module rv_decode
         endcase
     end
 
-    reg[5:0]    w_alu_ctrl;
+    reg[4:0]    w_alu_ctrl;
+
+    assign  w_alu_ctrl[4] = |{w_inst_srai,w_inst_sra};
 
     always_comb
     begin
         case (1'b1)
         w_inst_beq:
-            w_alu_ctrl[5:3] = `ALU_CMP_EQ;
+            w_alu_ctrl[3:0] = `ALU_CMP_EQ;
         |{w_inst_slti,w_inst_slt,w_inst_blt}:
-            w_alu_ctrl[5:3] = `ALU_CMP_LTS;
+            w_alu_ctrl[3:0] = `ALU_CMP_LTS;
         |{w_inst_sltiu,w_inst_bltu,w_inst_sltu}:
-            w_alu_ctrl[5:3] = `ALU_CMP_LTU;
+            w_alu_ctrl[3:0] = `ALU_CMP_LTU;
         w_inst_bne:
-            w_alu_ctrl[5:3] = `ALU_CMP_NEQ;
+            w_alu_ctrl[3:0] = `ALU_CMP_NEQ;
         w_inst_bge:
-            w_alu_ctrl[5:3] = `ALU_CMP_NLTS;
+            w_alu_ctrl[3:0] = `ALU_CMP_NLTS;
         w_inst_bgeu:
-            w_alu_ctrl[5:3] = `ALU_CMP_NLTU;
-        |{w_inst_srai,w_inst_sra}:
-            w_alu_ctrl[5:3] = `ALU_CMP_SHIFT_AR;
-        default:
-            w_alu_ctrl[5:3] = `ALU_CMP_NONE;
-        endcase
-    end
-
-    always_comb
-    begin
-        case (1'b1)
+            w_alu_ctrl[3:0] = `ALU_CMP_NLTU;
         w_inst_sub:
-            w_alu_ctrl[2:0] = `ALU_CTRL_SUB;
+            w_alu_ctrl[3:0] = `ALU_CTRL_SUB;
         w_inst_xori | w_inst_xor:
-            w_alu_ctrl[2:0] = `ALU_CTRL_XOR;
+            w_alu_ctrl[3:0] = `ALU_CTRL_XOR;
         w_inst_ori | w_inst_or:
-            w_alu_ctrl[2:0] = `ALU_CTRL_OR;
+            w_alu_ctrl[3:0] = `ALU_CTRL_OR;
         w_inst_andi | w_inst_and:
-            w_alu_ctrl[2:0] = `ALU_CTRL_AND;
+            w_alu_ctrl[3:0] = `ALU_CTRL_AND;
         w_inst_slli | w_inst_sll:
-            w_alu_ctrl[2:0] = `ALU_CTRL_SHL;
+            w_alu_ctrl[3:0] = `ALU_CTRL_SHL;
         w_inst_srli | w_inst_srl | w_inst_srai | w_inst_sra:
-            w_alu_ctrl[2:0] = `ALU_CTRL_SHR;
-        |{w_inst_beq,w_inst_bne,w_inst_blt,w_inst_bge,w_inst_bltu,w_inst_bgeu,w_inst_slti,w_inst_slt,w_inst_sltiu,w_inst_sltu}:
-            w_alu_ctrl[2:0] = `ALU_CTRL_CMP;
+            w_alu_ctrl[3:0] = `ALU_CTRL_SHR;
         default:
-            w_alu_ctrl[2:0] = `ALU_CTRL_ADD;
+            w_alu_ctrl[3:0] = `ALU_CTRL_ADD;
         endcase
     end
 
@@ -285,26 +275,20 @@ module rv_decode
 	reg [127:0] dbg_ascii_alu_ctrl;
 	always @* begin
 		dbg_ascii_alu_ctrl = "";
-        if (w_alu_ctrl[2:0] != 3'b111)
-        begin
-            if (w_alu_ctrl[2:0] == 3'b000) dbg_ascii_alu_ctrl = "ADD";
-            if (w_alu_ctrl[2:0] == 3'b001) dbg_ascii_alu_ctrl = "SUB";
-            if (w_alu_ctrl[2:0] == 3'b010) dbg_ascii_alu_ctrl = "XOR";
-            if (w_alu_ctrl[2:0] == 3'b011) dbg_ascii_alu_ctrl = "OR";
-            if (w_alu_ctrl[2:0] == 3'b100) dbg_ascii_alu_ctrl = "AND";
-            if (w_alu_ctrl[2:0] == 3'b101) dbg_ascii_alu_ctrl = "SHL";
-            if (w_alu_ctrl[2:0] == 3'b110) dbg_ascii_alu_ctrl = "SHR";
-            if (w_alu_ctrl[2:0] == 3'b111) dbg_ascii_alu_ctrl = "CMP";
-        end
-        else
-        begin
-            if (w_alu_ctrl[5:3] == 3'b000) dbg_ascii_alu_ctrl = "EQ";
-            if (w_alu_ctrl[5:3] == 3'b001) dbg_ascii_alu_ctrl = "LTS";
-            if (w_alu_ctrl[5:3] == 3'b010) dbg_ascii_alu_ctrl = "LTU";
-            if (w_alu_ctrl[5:3] == 3'b100) dbg_ascii_alu_ctrl = "!EQ";
-            if (w_alu_ctrl[5:3] == 3'b101) dbg_ascii_alu_ctrl = "!LTS";
-            if (w_alu_ctrl[5:3] == 3'b110) dbg_ascii_alu_ctrl = "!LTU";
-        end
+        if (w_alu_ctrl[3:0] == `ALU_CMP_EQ) dbg_ascii_alu_ctrl = "EQ";
+        if (w_alu_ctrl[3:0] == `ALU_CMP_LTS) dbg_ascii_alu_ctrl = "LTS";
+        if (w_alu_ctrl[3:0] == `ALU_CMP_LTU) dbg_ascii_alu_ctrl = "LTU";
+        if (w_alu_ctrl[3:0] == `ALU_CMP_NEQ) dbg_ascii_alu_ctrl = "!EQ";
+        if (w_alu_ctrl[3:0] == `ALU_CMP_NLTS) dbg_ascii_alu_ctrl = "!LTS";
+        if (w_alu_ctrl[3:0] == `ALU_CMP_NLTU) dbg_ascii_alu_ctrl = "!LTU";
+        if (w_alu_ctrl[3:0] == `ALU_CTRL_ADD) dbg_ascii_alu_ctrl = "ADD";
+        if (w_alu_ctrl[3:0] == `ALU_CTRL_SUB) dbg_ascii_alu_ctrl = "SUB";
+        if (w_alu_ctrl[3:0] == `ALU_CTRL_XOR) dbg_ascii_alu_ctrl = "XOR";
+        if (w_alu_ctrl[3:0] == `ALU_CTRL_OR) dbg_ascii_alu_ctrl = "OR";
+        if (w_alu_ctrl[3:0] == `ALU_CTRL_AND) dbg_ascii_alu_ctrl = "AND";
+        if (w_alu_ctrl[3:0] == `ALU_CTRL_SHL) dbg_ascii_alu_ctrl = "SHL";
+        if (w_alu_ctrl[4:0] == {1'b0,`ALU_CTRL_SHR}) dbg_ascii_alu_ctrl = "L_SHR";
+        if (w_alu_ctrl[4:0] == {1'b1,`ALU_CTRL_SHR}) dbg_ascii_alu_ctrl = "A_SHR";
 	end
 
 	reg [127:0] dbg_ascii_instr;

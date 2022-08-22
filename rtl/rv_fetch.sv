@@ -29,20 +29,13 @@ module rv_fetch
     reg         r_pc_sel;
 
     assign  w_fetch_pc_p4 = r_fetch_pc + 1'b1;
-    assign  w_fetch_pc_next = i_pc_sel ? i_pc_target : w_fetch_pc_p4;
+    assign  w_fetch_pc_next = /*i_pc_sel ? i_pc_target : */w_fetch_pc_p4;
 
     always_ff @(posedge i_clk)
     begin
         if (!i_reset_n)
         begin
-            r_pc_sel <= '0;
             r_fetch_pc <= RESET_ADDR[31:2] - 1'b1;
-        end
-        // staged core workarround
-        else if (i_pc_sel)
-        begin
-            r_pc_latched <= i_pc_target;
-            r_pc_sel <= '1;
         end
         // staged core workarround
         //else if ((!i_stall) & i_bus_ack)
@@ -50,14 +43,25 @@ module rv_fetch
         begin
             // staged core workarround
             if (r_pc_sel)
-            begin
-                r_pc_sel <= '0;
                 r_fetch_pc <= r_pc_latched;
-            end
             else
-            begin
                 r_fetch_pc <= w_fetch_pc_next;
-            end
+        end
+    end
+
+    always_ff @(posedge i_clk)
+    begin
+        if (!i_reset_n)
+            r_pc_sel <= '0;
+        // staged core workarround
+        else if (i_pc_sel)
+        begin
+            r_pc_latched <= i_pc_target;
+            r_pc_sel <= '1;
+        end
+        else if (!i_pre_stall)
+        begin
+            r_pc_sel <= '0;
         end
     end
 

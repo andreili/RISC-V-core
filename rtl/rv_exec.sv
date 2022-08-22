@@ -23,7 +23,7 @@ module rv_exec
     input   wire[1:0]                   i_alu_op1_sel,
     input   wire                        i_alu_op2_sel,
     input   wire[2:0]                   i_funct3,
-    input   wire[5:0]                   i_alu_ctrl,
+    input   wire[4:0]                   i_alu_ctrl,
 
     output  wire[31:0]                  o_alu_result,
     output  wire                        o_reg_write,
@@ -40,8 +40,8 @@ module rv_exec
 
     reg[31:2]   r_pc;
     reg[31:2]   r_pc_p4;
-    reg[31:0]   r_rs1_val;
-    reg[31:0]   r_rs2_val;
+    //reg[31:0]   r_rs1_val;
+    //reg[31:0]   r_rs2_val;
     //reg[4:0]    r_rs1;
     //reg[4:0]    r_rs2;
     reg[4:0]    r_rd;
@@ -57,7 +57,7 @@ module rv_exec
     reg         r_pc_sel;
     wire        w_zero;
     reg[2:0]    r_funct3;
-    reg[5:0]    r_alu_ctrl;
+    reg[4:0]    r_alu_ctrl;
 
     always_ff @(posedge i_clk)
     begin
@@ -65,8 +65,8 @@ module rv_exec
         begin
             r_pc <= '0;
             r_pc_p4 <= '0;
-            r_rs1_val <= '0;
-            r_rs2_val <= '0;
+            //r_rs1_val <= '0;
+            //r_rs2_val <= '0;
             //r_rs1 <= '0;
             //r_rs2 <= '0;
             r_rd <= '0;
@@ -87,8 +87,8 @@ module rv_exec
         begin
             r_pc <= i_pc;
             r_pc_p4 <= i_pc_p4;
-            r_rs1_val <= i_rs1_val;
-            r_rs2_val <= i_rs2_val;
+            //r_rs1_val <= i_rs1_val;
+            //r_rs2_val <= i_rs2_val;
             //r_rs1 <= i_rs1;
             //r_rs2 <= i_rs2;
             r_rd <= i_rd;
@@ -111,12 +111,12 @@ module rv_exec
     always_comb
     begin
         case (r_alu_op1_sel)
-        `ALU_SRC_OP1_REG: w_op1 = r_rs1_val;
+        `ALU_SRC_OP1_REG: w_op1 = i_rs1_val;
         `ALU_SRC_OP1_PC:  w_op1 = { r_pc, 2'b0 };
         default:          w_op1 = '0;
         endcase
     end
-    assign  w_op2 = (r_alu_op2_sel == `ALU_SRC_OP2_IMM) ? r_imm : r_rs2_val;
+    assign  w_op2 = (r_alu_op2_sel == `ALU_SRC_OP2_IMM) ? r_imm : i_rs2_val;
 
     rv_alu
     u_alu
@@ -128,8 +128,9 @@ module rv_exec
         .o_zero                         (w_zero)
     );
 
-    assign  o_pc_src = (r_jump | (r_branch & (!w_zero)));
-    wire[31:2]  w_pc = r_pc_sel ? r_rs1_val[31:2] : r_pc;
+    //assign  o_pc_src = (r_jump | (r_branch & (!w_zero)));
+    assign  o_pc_src = (r_jump | (r_branch & (o_alu_result[0])));
+    wire[31:2]  w_pc = r_pc_sel ? i_rs1_val[31:2] : r_pc;
     assign  o_pc_target = w_pc + r_imm[31:2];
 
     assign  o_reg_write = r_reg_write;
@@ -139,6 +140,6 @@ module rv_exec
     assign  o_pc_p4 = r_pc_p4;
     assign  o_res_src = r_res_src;
     assign  o_funct3 = r_funct3;
-    assign  o_rs2_val = r_rs2_val;
+    assign  o_rs2_val = i_rs2_val;
 
 endmodule

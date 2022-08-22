@@ -69,10 +69,12 @@ module tcm
 
     initial
     begin
+    `ifdef TO_SIM
         string fw_file;
         if ($value$plusargs("TEST_FW=%s", fw_file))
             $readmemh(fw_file, r_mem);
         else
+    `endif
             $readmemh("../vrf/test_fw/out/risc.vh", r_mem);
     end
 

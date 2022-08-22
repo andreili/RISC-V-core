@@ -62,7 +62,7 @@ module rv_core
     wire[1:0]   w_decode_alu_op1_sel;
     wire        w_decode_alu_op2_sel;
     wire[2:0]   w_decode_funct3;
-    wire[5:0]   w_decode_alu_ctrl;
+    wire[4:0]   w_decode_alu_ctrl;
     wire        w_decode_inv_instr;
 
     wire[2:0]   w_exec_funct3;
@@ -232,17 +232,23 @@ module rv_core
         .o_reg_write                    (w_write_reg_write)
     );
 
-    //regfile
-    (* ramstyle = "M10K" *) reg[31:0]   r_reg_file[31:1];
-
-    assign w_reg_data1 = (|w_decode_rs1) ? r_reg_file[w_decode_rs1] : '0;
-    assign w_reg_data2 = (|w_decode_rs2) ? r_reg_file[w_decode_rs2] : '0;
-
-    always_ff @(posedge i_clk)
-    begin
-        if (i_reset_n && w_write_reg_write && (|w_write_rd))
-            r_reg_file[w_write_rd] <= w_write_data;
-    end
+    rv_regs
+    u_regs
+    (
+        .i_clk                          (i_clk),
+        .i_reset_n                      (i_reset_n),
+        .i_rs1                          (w_decode_rs1),
+        .i_rs2                          (w_decode_rs2),
+        .i_rd                           (w_write_rd),
+        .i_write                        (w_write_reg_write),
+        .i_data                         (w_write_data),
+    `ifdef TO_SIM
+        .o_x1                           (o_x1),
+        .o_x2                           (o_x2),
+    `endif
+        .o_data1                        (w_reg_data1),
+        .o_data2                        (w_reg_data2)
+    );
 
     always_ff @(posedge i_clk)
     begin
@@ -326,17 +332,6 @@ module rv_core
         if (r_stage_next == STAGE_MEMORY)  dbg_ascii_stage_next = "memory";
         if (r_stage_next == STAGE_WRITE)   dbg_ascii_stage_next = "write";
     end
-
-`ifdef TO_SIM
-    assign  o_x1 = r_reg_file[1];
-    assign  o_x2 = r_reg_file[2];
-`endif
-
-initial begin
-    r_reg_file[1] = 0;
-    r_reg_file[2] = 0;
-    r_reg_file[3] = 0;
-end
 
 `endif
 
