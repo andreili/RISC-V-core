@@ -41,12 +41,48 @@ module rv_decode
     wire[2:0]   w_funct3;
     wire[4:0]   w_rs1, w_rs2;
     wire[6:0]   w_funct7;
+    wire[11:0]  w_funct12;
     reg[31:0]   w_imm;
 
     wire        w_reg_write;
     reg[1:0]    w_res_src;
     reg[1:0]    r_alu_op1_sel;
     reg         r_alu_op2_sel;
+
+    wire    w_inst_supported;
+    wire    w_inst_lb, w_inst_lh, w_inst_lw, w_inst_lbu, w_inst_lhu;
+    wire    w_inst_addi, w_inst_slli, w_inst_slti, w_inst_sltiu;
+    wire    w_inst_xori, w_inst_srli, w_inst_srai, w_inst_ori, w_inst_andi;
+    wire    w_inst_auipc;
+    wire    w_inst_sb, w_inst_sh, w_inst_sw;
+    wire    w_inst_add, w_inst_sub, w_inst_sll, w_inst_slt, w_inst_sltu;
+    wire    w_inst_xor, w_inst_srl, w_inst_sra, w_inst_or, w_inst_and;
+    wire    w_inst_lui;
+    wire    w_inst_beq, w_inst_bne, w_inst_blt, w_inst_bge, w_inst_bltu, w_inst_bgeu;
+    wire    w_inst_jalr;
+    wire    w_inst_jal;
+    wire    w_inst_ecall, w_inst_ebreak;
+
+    wire    w_inst_fence, w_inst_fence_i;
+
+    wire    w_inst_load;
+    wire    w_inst_store;
+    wire    w_inst_imm;
+    wire    w_inst_reg;
+    wire    w_inst_branch;
+
+    wire    w_inst_full;
+    wire    w_inst_grp_load;
+    wire    w_inst_grp_arif_imm;
+    wire    w_inst_grp_auipc;
+    wire    w_inst_grp_store;
+    wire    w_inst_grp_arif_reg;
+    wire    w_inst_grp_lui;
+    wire    w_inst_grp_branch;
+    wire    w_inst_grp_jalr;
+    wire    w_inst_grp_jal;
+    wire    w_inst_grp_misc_mem;
+    wire    w_inst_grp_system;
 
     always_ff @(posedge i_clk)
     begin
@@ -82,27 +118,7 @@ module rv_decode
     assign      w_rs1            = w_data[19:15];
     assign      w_rs2            = w_data[24:20];
     assign      w_funct7         = w_data[31:25];
-
-    wire    w_inst_supported;
-    wire    w_inst_lb, w_inst_lh, w_inst_lw, w_inst_lbu, w_inst_lhu;
-    wire    w_inst_addi, w_inst_slli, w_inst_slti, w_inst_sltiu;
-    wire    w_inst_xori, w_inst_srli, w_inst_srai, w_inst_ori, w_inst_andi;
-    wire    w_inst_auipc;
-    wire    w_inst_sb, w_inst_sh, w_inst_sw;
-    wire    w_inst_add, w_inst_sub, w_inst_sll, w_inst_slt, w_inst_sltu;
-    wire    w_inst_xor, w_inst_srl, w_inst_sra, w_inst_or, w_inst_and;
-    wire    w_inst_lui;
-    wire    w_inst_beq, w_inst_bne, w_inst_blt, w_inst_bge, w_inst_bltu, w_inst_bgeu;
-    wire    w_inst_jalr;
-    wire    w_inst_jal;
-
-    wire    w_inst_fence, w_inst_fence_i;
-
-    wire    w_inst_load;
-    wire    w_inst_store;
-    wire    w_inst_imm;
-    wire    w_inst_reg;
-    wire    w_inst_branch;
+    assign      w_funct12        = w_data[31:20];
 
     assign  w_inst_supported = 
             w_inst_lb    | w_inst_lh   | w_inst_lw   | w_inst_lbu   | w_inst_lhu  |
@@ -118,61 +134,72 @@ module rv_decode
             w_inst_jal   |
             w_inst_fence | w_inst_fence_i;
 
+    assign  w_inst_full = (w_op[1:0] == 2'b11);
+
+    // instructions groups
+    assign  w_inst_grp_load     = (w_op[6:2] == 5'b00000) & w_inst_full;
+    assign  w_inst_grp_misc_mem = (w_op[6:2] == 5'b00011) & w_inst_full;
+    assign  w_inst_grp_arif_imm = (w_op[6:2] == 5'b00100) & w_inst_full;
+    assign  w_inst_grp_auipc    = (w_op[6:2] == 5'b00101) & w_inst_full;
+    assign  w_inst_grp_store    = (w_op[6:2] == 5'b01000) & w_inst_full;
+    assign  w_inst_grp_arif_reg = (w_op[6:2] == 5'b01100) & w_inst_full;
+    assign  w_inst_grp_lui      = (w_op[6:2] == 5'b01101) & w_inst_full;
+    assign  w_inst_grp_branch   = (w_op[6:2] == 5'b11000) & w_inst_full;
+    assign  w_inst_grp_jalr     = (w_op[6:2] == 5'b11001) & w_inst_full;
+    assign  w_inst_grp_jal      = (w_op[6:2] == 5'b11011) & w_inst_full;
+    assign  w_inst_grp_system   = (w_op[6:2] == 5'b11100) & w_inst_full;
+
     // memory read operations
-    assign  w_inst_lb       = (w_op == 7'b0000011) & (w_funct3 == 3'b000);
-    assign  w_inst_lh       = (w_op == 7'b0000011) & (w_funct3 == 3'b001);
-    assign  w_inst_lw       = (w_op == 7'b0000011) & (w_funct3 == 3'b010);
-    assign  w_inst_lbu      = (w_op == 7'b0000011) & (w_funct3 == 3'b100);
-    assign  w_inst_lhu      = (w_op == 7'b0000011) & (w_funct3 == 3'b101);
-
+    assign  w_inst_lb       = w_inst_grp_load & (w_funct3 == 3'b000);
+    assign  w_inst_lh       = w_inst_grp_load & (w_funct3 == 3'b001);
+    assign  w_inst_lw       = w_inst_grp_load & (w_funct3 == 3'b010);
+    assign  w_inst_lbu      = w_inst_grp_load & (w_funct3 == 3'b100);
+    assign  w_inst_lhu      = w_inst_grp_load & (w_funct3 == 3'b101);
     // arifmetical with immediate
-    assign  w_inst_addi     = (w_op == 7'b0010011) & (w_funct3 == 3'b000);
-    assign  w_inst_slli     = (w_op == 7'b0010011) & (w_funct3 == 3'b001);
-    assign  w_inst_slti     = (w_op == 7'b0010011) & (w_funct3 == 3'b010);
-    assign  w_inst_sltiu    = (w_op == 7'b0010011) & (w_funct3 == 3'b011);
-    assign  w_inst_xori     = (w_op == 7'b0010011) & (w_funct3 == 3'b100);
-    assign  w_inst_srli     = (w_op == 7'b0010011) & (w_funct3 == 3'b101) & (w_funct7 == 7'b0000000);
-    assign  w_inst_srai     = (w_op == 7'b0010011) & (w_funct3 == 3'b101) & (w_funct7 == 7'b0100000);
-    assign  w_inst_ori      = (w_op == 7'b0010011) & (w_funct3 == 3'b110);
-    assign  w_inst_andi     = (w_op == 7'b0010011) & (w_funct3 == 3'b111);
-
+    assign  w_inst_addi     = w_inst_grp_arif_imm & (w_funct3 == 3'b000);
+    assign  w_inst_slli     = w_inst_grp_arif_imm & (w_funct3 == 3'b001);
+    assign  w_inst_slti     = w_inst_grp_arif_imm & (w_funct3 == 3'b010);
+    assign  w_inst_sltiu    = w_inst_grp_arif_imm & (w_funct3 == 3'b011);
+    assign  w_inst_xori     = w_inst_grp_arif_imm & (w_funct3 == 3'b100);
+    assign  w_inst_srli     = w_inst_grp_arif_imm & (w_funct3 == 3'b101) & (w_funct7 == 7'b0000000);
+    assign  w_inst_srai     = w_inst_grp_arif_imm & (w_funct3 == 3'b101) & (w_funct7 == 7'b0100000);
+    assign  w_inst_ori      = w_inst_grp_arif_imm & (w_funct3 == 3'b110);
+    assign  w_inst_andi     = w_inst_grp_arif_imm & (w_funct3 == 3'b111);
     // add upper immediate to PC
-    assign  w_inst_auipc    = (w_op == 7'b0010111);
-
+    assign  w_inst_auipc    = w_inst_grp_auipc;
     // memory write operations
-    assign  w_inst_sb       = (w_op == 7'b0100011) & (w_funct3 == 3'b000);
-    assign  w_inst_sh       = (w_op == 7'b0100011) & (w_funct3 == 3'b001);
-    assign  w_inst_sw       = (w_op == 7'b0100011) & (w_funct3 == 3'b010);
-
+    assign  w_inst_sb       = w_inst_grp_store & (w_funct3 == 3'b000);
+    assign  w_inst_sh       = w_inst_grp_store & (w_funct3 == 3'b001);
+    assign  w_inst_sw       = w_inst_grp_store & (w_funct3 == 3'b010);
     // arifmetical with register
-    assign  w_inst_add      = (w_op == 7'b0110011) & (w_funct3 == 3'b000) & (w_funct7 == 7'b0000000);
-    assign  w_inst_sub      = (w_op == 7'b0110011) & (w_funct3 == 3'b000) & (w_funct7 == 7'b0100000);
-    assign  w_inst_sll      = (w_op == 7'b0110011) & (w_funct3 == 3'b001) & (w_funct7 == 7'b0000000);
-    assign  w_inst_slt      = (w_op == 7'b0110011) & (w_funct3 == 3'b010) & (w_funct7 == 7'b0000000);
-    assign  w_inst_sltu     = (w_op == 7'b0110011) & (w_funct3 == 3'b011) & (w_funct7 == 7'b0000000);
-    assign  w_inst_xor      = (w_op == 7'b0110011) & (w_funct3 == 3'b100) & (w_funct7 == 7'b0000000);
-    assign  w_inst_srl      = (w_op == 7'b0110011) & (w_funct3 == 3'b101) & (w_funct7 == 7'b0000000);
-    assign  w_inst_sra      = (w_op == 7'b0110011) & (w_funct3 == 3'b101) & (w_funct7 == 7'b0100000);
-    assign  w_inst_or       = (w_op == 7'b0110011) & (w_funct3 == 3'b110) & (w_funct7 == 7'b0000000);
-    assign  w_inst_and      = (w_op == 7'b0110011) & (w_funct3 == 3'b111) & (w_funct7 == 7'b0000000);
-
-    assign  w_inst_lui      = (w_op == 7'b0110111);
-
+    assign  w_inst_add      = w_inst_grp_arif_reg & (w_funct3 == 3'b000) & (w_funct7 == 7'b0000000);
+    assign  w_inst_sub      = w_inst_grp_arif_reg & (w_funct3 == 3'b000) & (w_funct7 == 7'b0100000);
+    assign  w_inst_sll      = w_inst_grp_arif_reg & (w_funct3 == 3'b001) & (w_funct7 == 7'b0000000);
+    assign  w_inst_slt      = w_inst_grp_arif_reg & (w_funct3 == 3'b010) & (w_funct7 == 7'b0000000);
+    assign  w_inst_sltu     = w_inst_grp_arif_reg & (w_funct3 == 3'b011) & (w_funct7 == 7'b0000000);
+    assign  w_inst_xor      = w_inst_grp_arif_reg & (w_funct3 == 3'b100) & (w_funct7 == 7'b0000000);
+    assign  w_inst_srl      = w_inst_grp_arif_reg & (w_funct3 == 3'b101) & (w_funct7 == 7'b0000000);
+    assign  w_inst_sra      = w_inst_grp_arif_reg & (w_funct3 == 3'b101) & (w_funct7 == 7'b0100000);
+    assign  w_inst_or       = w_inst_grp_arif_reg & (w_funct3 == 3'b110) & (w_funct7 == 7'b0000000);
+    assign  w_inst_and      = w_inst_grp_arif_reg & (w_funct3 == 3'b111) & (w_funct7 == 7'b0000000);
+    // load upper immediate
+    assign  w_inst_lui      = w_inst_grp_lui;
     // branches
-    assign  w_inst_beq      = (w_op == 7'b1100011) & (w_funct3 == 3'b000);
-    assign  w_inst_bne      = (w_op == 7'b1100011) & (w_funct3 == 3'b001);
-    assign  w_inst_blt      = (w_op == 7'b1100011) & (w_funct3 == 3'b100);
-    assign  w_inst_bge      = (w_op == 7'b1100011) & (w_funct3 == 3'b101);
-    assign  w_inst_bltu     = (w_op == 7'b1100011) & (w_funct3 == 3'b110);
-    assign  w_inst_bgeu     = (w_op == 7'b1100011) & (w_funct3 == 3'b111);
-
+    assign  w_inst_beq      = w_inst_grp_branch & (w_funct3 == 3'b000);
+    assign  w_inst_bne      = w_inst_grp_branch & (w_funct3 == 3'b001);
+    assign  w_inst_blt      = w_inst_grp_branch & (w_funct3 == 3'b100);
+    assign  w_inst_bge      = w_inst_grp_branch & (w_funct3 == 3'b101);
+    assign  w_inst_bltu     = w_inst_grp_branch & (w_funct3 == 3'b110);
+    assign  w_inst_bgeu     = w_inst_grp_branch & (w_funct3 == 3'b111);
     // jumps
-    assign  w_inst_jalr     = (w_op == 7'b1100111) & (w_funct3 == 3'b000);
-    assign  w_inst_jal      = (w_op == 7'b1101111);
-
+    assign  w_inst_jalr     = w_inst_grp_jalr & (w_funct3 == 3'b000);
+    assign  w_inst_jal      = w_inst_grp_jal;
     // fence
-    assign  w_inst_fence    = (w_op == 7'b0001111) & (w_funct3 == 3'b000);
-    assign  w_inst_fence_i  = (w_op == 7'b0001111) & (w_funct3 == 3'b001);
+    assign  w_inst_fence    = w_inst_grp_misc_mem & (w_funct3 == 3'b000);
+    assign  w_inst_fence_i  = w_inst_grp_misc_mem & (w_funct3 == 3'b001);
+    // system
+    assign  w_inst_ecall    = w_inst_grp_system & (w_funct12 == 12'b000000000000);
+    assign  w_inst_ebreak   = w_inst_grp_system & (w_funct12 == 12'b000000000001);
 
     assign  w_inst_load = w_inst_lb | w_inst_lh | w_inst_lw | w_inst_lbu | w_inst_lhu;
     assign  w_inst_store = w_inst_sb | w_inst_sh | w_inst_sw;
