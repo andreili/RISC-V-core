@@ -38,7 +38,8 @@ LIBS = -Wl,--start-group -lc -lnosys -lm -lgcc -lstdc++ -lsupc++ -Wl,--end-group
 
 PROJ_DIR := $(shell pwd)
 
-OBJS = init.o test_main.o
+#OBJS = init.o test_main.o
+OBJS = main.o
 INC = .
 
 OBJECTS := $(patsubst %, $(WORK_DIR)/%, $(OBJS))

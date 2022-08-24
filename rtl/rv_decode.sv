@@ -23,7 +23,7 @@ module rv_decode
     output  wire                        o_pc_sel,
     output  wire                        o_jump,
     output  wire                        o_branch,
-    output  wire[1:0]                   o_alu_op1_sel,
+    output  wire                        o_alu_op1_sel,
     output  wire                        o_alu_op2_sel,
     output  wire[2:0]                   o_funct3,
     output  wire[4:0]                   o_alu_ctrl,
@@ -49,7 +49,7 @@ module rv_decode
 
     wire        w_reg_write;
     reg[1:0]    w_res_src;
-    reg[1:0]    r_alu_op1_sel;
+    reg         r_alu_op1_sel;
     reg         r_alu_op2_sel;
 
     wire    w_inst_supported;
@@ -104,12 +104,15 @@ module rv_decode
         end
     end
 
+`ifdef MODE_STAGED
     // staged core workarround
     reg         r_flush;
     wire[31:0]  w_data = r_flush ? '0 : i_data;
     always_ff @(posedge i_clk)
     r_flush <= i_flush;
-
+`else
+    wire[31:0]  w_data = i_flush ? '0 : i_data;
+`endif
     /*always_ff @(posedge i_clk)
     begin
         if ((!i_reset_n) || i_flush)
@@ -121,7 +124,7 @@ module rv_decode
     assign      w_op             = w_data[6:0];
     assign      w_rd             = w_data[11:7];
     assign      w_funct3         = w_data[14:12];
-    assign      w_rs1            = w_data[19:15];
+    assign      w_rs1            = w_inst_lui ? '0 : w_data[19:15];
     assign      w_rs2            = w_data[24:20];
     assign      w_funct7         = w_data[31:25];
     assign      w_funct12        = w_data[31:20];
@@ -245,8 +248,6 @@ module rv_decode
         case (1'b1)
         |{w_inst_auipc,w_inst_jal}:
             r_alu_op1_sel = `ALU_SRC_OP1_PC;
-        w_inst_lui:
-            r_alu_op1_sel = `ALU_SRC_OP1_ZERO;
         default:
             r_alu_op1_sel = `ALU_SRC_OP1_REG;
         endcase

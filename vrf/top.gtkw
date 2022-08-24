@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
-[*] Tue Aug 23 19:07:49 2022
+[*] Wed Aug 24 18:40:37 2022
 [*]
 [dumpfile] "D:\Projects\RISC-V\my_core\vrf\logs_top\wave.vcd"
-[dumpfile_mtime] "Tue Aug 23 19:06:24 2022"
-[dumpfile_size] 1372003
+[dumpfile_mtime] "Wed Aug 24 18:38:52 2022"
+[dumpfile_size] 1290845
 [savefile] "D:\Projects\RISC-V\my_core\vrf\top.gtkw"
-[timestart] 95991
+[timestart] 1
 [size] 1920 1017
 [pos] -9 -9
-*-9.720720 97101 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-13.852259 29701 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.top.
 [treeopen] TOP.top.u_rv.
@@ -22,7 +22,7 @@
 TOP.top.u_rv.i_clk
 TOP.top.i_reset_n
 TOP.top.w_reset_n
-@c00201
+@800200
 -WB BUS
 @22
 TOP.top.u_rv.o_wb_adr[31:0]
@@ -30,6 +30,8 @@ TOP.top.u_rv.o_wb_adr[31:0]
 TOP.top.u_rv.o_wb_cyc
 TOP.top.u_rv.o_wb_stb
 TOP.top.u_rv.o_wb_we
+@29
+TOP.top.u_rv.i_wb_ack
 @c00022
 TOP.top.u_rv.o_wb_sel[3:0]
 @28
@@ -42,11 +44,11 @@ TOP.top.u_rv.o_wb_sel[3:0]
 @22
 TOP.top.u_rv.i_wb_dat[31:0]
 TOP.top.u_rv.o_wb_dat[31:0]
-@1401201
+@1000200
 -WB BUS
 @820
-TOP.top.u_rv.dbg_ascii_stage[127:0]
-TOP.top.u_rv.dbg_ascii_stage_next[127:0]
+TOP.top.u_rv.u_ctrl.dbg_ascii_stage[127:0]
+TOP.top.u_rv.u_ctrl.dbg_ascii_stage_next[127:0]
 TOP.top.u_rv.u_st2_decode.dbg_ascii_instr[127:0]
 @28
 TOP.top.u_rv.u_st2_decode.o_inv_instr
@@ -106,7 +108,6 @@ TOP.top.u_rv.u_st2_decode.w_res_src[1:0]
 TOP.top.u_rv.u_st2_decode.w_rs1[4:0]
 TOP.top.u_rv.u_st2_decode.w_rs2[4:0]
 @28
-TOP.top.u_rv.u_st2_decode.r_alu_op1_sel[1:0]
 TOP.top.u_rv.u_st2_decode.r_alu_op2_sel
 @1401200
 -ST2_DECODE
@@ -125,7 +126,6 @@ TOP.top.u_rv.u_st3_exec.r_res_src[1:0]
 TOP.top.u_rv.u_st3_exec.i_rs1_val[31:0]
 TOP.top.u_rv.u_st3_exec.i_rs2_val[31:0]
 @28
-TOP.top.u_rv.u_st3_exec.r_alu_op1_sel[1:0]
 TOP.top.u_rv.u_st3_exec.r_alu_op2_sel
 TOP.top.u_rv.u_st3_exec.r_reg_write
 TOP.top.u_rv.u_st3_exec.r_mem_write
@@ -223,6 +223,8 @@ TOP.top.u_rv.u_regs.r_reg_file[12][31:0]
 TOP.top.u_rv.u_regs.r_reg_file[13][31:0]
 TOP.top.u_rv.u_regs.r_reg_file[14][31:0]
 TOP.top.u_rv.u_regs.r_reg_file[15][31:0]
+TOP.top.u_rv.u_regs.r_reg_file[16][31:0]
+TOP.top.u_rv.u_regs.r_reg_file[17][31:0]
 @1000200
 -REG FILE
 @28

@@ -102,7 +102,7 @@ module top
     wire[(MAIN_NIC_SLAVES_COUNT-1):0][31:0]	w_main_slave_rdata;
 
     assign  w_main_slave_rdata[0] = '0;
-    assign  w_main_slave_ack  [0] = '0;
+    assign  w_main_slave_ack  [0] = '1;
     assign  w_main_slave_rdata[(MAIN_NIC_SLAVES_COUNT-1):2] = '0;
     assign  w_main_slave_ack  [(MAIN_NIC_SLAVES_COUNT-1):2] = '0;
 

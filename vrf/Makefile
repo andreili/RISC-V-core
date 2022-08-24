@@ -56,7 +56,7 @@ top:
 	@rm -rf logs logs_$@ obj_dir
 	@$(VERILATOR) $(VERILATOR_FLAGS) -CFLAGS "-I../tb/ -DTOP_NAME=$@" -DTO_SIM -f input.vc $@.sv tb/tb.cpp sim_$@.cpp
 	@mkdir -p logs_$@
-	obj_dir/Vtop +trace || (exit 1)
+	obj_dir/Vtop +trace
 	@rm -rf obj_dir
 #	@echo "-- COVERAGE ----------------"
 #	@rm -rf logs/annotated

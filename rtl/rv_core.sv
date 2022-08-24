@@ -30,28 +30,20 @@ module rv_core
     input   wire[31:0]                  i_memory_data
 );
 
-    localparam  STAGE_FETCH             = 3'h1;
-    localparam  STAGE_DECODE            = 3'h2;
-    localparam  STAGE_EXECUTE           = 3'h3;
-    localparam  STAGE_MEMORY            = 3'h4;
-    localparam  STAGE_WRITE             = 3'h5;
-
     wire    w_fetch_stall;
-    wire    w_decode_stall = 1'b0;
+    wire    w_decode_stall;
     wire    w_decode_flush;
-    wire    w_exec_flush = 1'b0;
-
-    reg[2:0]    r_stage;
-    reg[2:0]    r_stage_next;
+    wire    w_exec_flush;
 
     wire[31:2]  w_fetch_pc;
     wire[31:2]  w_fetch_pc_p4;
-    wire[4:0]   w_decode_rs1, w_decode_rs2, w_decode_rd;
+
     wire[31:0]  w_reg_data1, w_reg_data2;
     
     wire[31:2]  w_decode_pc;
     wire[31:2]  w_decode_pc_p4;
     wire[31:0]  w_decode_imm;
+    wire[4:0]   w_decode_rs1, w_decode_rs2, w_decode_rd;
     wire        w_decode_reg_write;
     wire        w_decode_mem_read;
     wire        w_decode_mem_write;
@@ -59,7 +51,7 @@ module rv_core
     wire        w_decode_pc_sel;
     wire        w_decode_jump;
     wire        w_decode_branch;
-    wire[1:0]   w_decode_alu_op1_sel;
+    wire        w_decode_alu_op1_sel;
     wire        w_decode_alu_op2_sel;
     wire[2:0]   w_decode_funct3;
     wire[4:0]   w_decode_alu_ctrl;
@@ -74,6 +66,7 @@ module rv_core
     wire        w_exec_mem_read;
     wire        w_exec_mem_write;
     wire[31:2]  w_exec_pc_p4;
+    wire[4:0]   w_exec_rs1, w_exec_rs2;
     wire[4:0]   w_exec_rd;
     wire[1:0]   w_exec_res_src;
     wire        w_exec_pc_src;
@@ -96,9 +89,9 @@ module rv_core
     wire[4:0]   w_write_rd;
     wire        w_write_reg_write;
 
-    // staged core workarround
-    wire    w_pre_stall = !((r_stage == STAGE_WRITE) && (r_stage_next == STAGE_FETCH));
-    assign  w_decode_flush = !((r_stage == STAGE_FETCH) && (r_stage_next == STAGE_DECODE));
+`ifdef MODE_STAGED
+    wire    w_pre_stall;
+`endif
 
     rv_fetch
     #(
@@ -111,7 +104,9 @@ module rv_core
         //.i_stall                        (w_fetch_stall),
         .i_pc_sel                       (w_exec_pc_src),
         .i_pc_target                    (w_exec_pc_target),
+    `ifdef MODE_STAGED
         .i_pre_stall                    (w_pre_stall),
+    `endif
         .o_pc                           (w_fetch_pc),
         .o_pc_p4                        (w_fetch_pc_p4)
     );
@@ -179,6 +174,8 @@ module rv_core
         .o_reg_write                    (w_exec_reg_write),
         .o_mem_read                     (w_exec_mem_read),
         .o_mem_write                    (w_exec_mem_write),
+        .o_rs1                          (w_exec_rs1),
+        .o_rs2                          (w_exec_rs2),
         .o_rd                           (w_exec_rd),
         .o_pc_p4                        (w_exec_pc_p4),
         .o_res_src                      (w_exec_res_src),
@@ -216,9 +213,6 @@ module rv_core
         .o_wdata                        (w_memory_wdata)
     );
 
-    assign  o_data_sel = (w_memory_alu_result[`SLAVE_SEL_FROM:`SLAVE_SEL_TO] == `TCM_ADDR_SEL);
-    assign  o_data_addr = w_memory_alu_result[(`TCM_ADDR_WIDTH+1):2];
-
     rv_write
     u_st5_write
     (
@@ -255,92 +249,45 @@ module rv_core
         .o_data1                        (w_reg_data1),
         .o_data2                        (w_reg_data2)
     );
+    
+    rv_ctrl
+    u_ctrl
+    (
+        .i_clk                          (i_clk),
+        .i_reset_n                      (i_reset_n),
+        .i_decode_rs1                   (w_decode_rs1),
+        .i_decode_rs2                   (w_decode_rs2),
+        .i_decode_rd                    (w_decode_rd),
+        .i_decode_inv_instr             (w_decode_inv_instr),
+        .i_exec_rs1                     (w_exec_rs1),
+        .i_exec_rs2                     (w_exec_rs2),
+        .i_exec_rd                      (w_exec_rd),
+        .i_memory_rd                    (w_memory_rd),
+        .i_write_rd                     (w_write_rd),
+    `ifdef MODE_STAGED
+        .o_fetch_pre_stall              (w_pre_stall),
+    `endif
+        //.o_decode_bp_rs1                (),
+        //.o_decode_bp_rs2                (),
+        .o_fetch_stall                  (w_fetch_stall),
+        .o_decode_stall                 (w_decode_stall),
+        .o_decode_flush                 (w_decode_flush),
+        //.o_exec_stall                   (),
+        .o_exec_flush                   (w_exec_flush)
+    );
 
     // TODO: w_decode_csr_idx, w_decode_csr_read, w_decode_csr_write
-
-    always_ff @(posedge i_clk)
-    begin
-        if (!i_reset_n)
-            r_stage <= STAGE_MEMORY;
-        else
-            r_stage <= r_stage_next;
-    end
-
-    always_comb
-    begin : next_stage
-        case (r_stage)
-            STAGE_FETCH:    r_stage_next = /*(i_wb_ack) ? */STAGE_DECODE/* : STAGE_FETCH*/;
-            STAGE_DECODE:   r_stage_next = w_decode_inv_instr ? STAGE_DECODE : STAGE_EXECUTE;
-            STAGE_EXECUTE:  r_stage_next = STAGE_MEMORY;
-            STAGE_MEMORY:   r_stage_next = /*(i_wb_ack) ?*/ STAGE_WRITE/* : STAGE_MEMORY*/;
-            STAGE_WRITE:    r_stage_next = STAGE_FETCH;
-            default:        r_stage_next = STAGE_FETCH;
-        endcase
-    end
-
-    reg     r_stb;
-    always_comb
-    begin
-        case (r_stage)
-        STAGE_FETCH:    r_stb = '1;
-        STAGE_MEMORY:   r_stb = (w_memory_mem_write | w_memory_mem_read);
-        default:        r_stb = '0;
-        endcase
-    end
-
-    reg     r_cyc;
-    always_comb
-    begin
-        case (r_stage)
-        STAGE_FETCH:    r_cyc = '1;
-        STAGE_MEMORY:   r_cyc = (w_memory_mem_write | w_memory_mem_read);
-        default:        r_cyc = '0;
-        endcase
-    end
-
-    reg     r_we;
-    always_comb
-    begin
-        case (r_stage)
-        STAGE_MEMORY:   r_we = w_memory_mem_write;
-        default:        r_we = '0;
-        endcase
-    end
-
-    assign  w_fetch_stall = (r_stage != STAGE_FETCH);
 
 // WB BUS assignments
     assign  o_wb_adr = w_memory_alu_result;
     assign  o_wb_dat = w_memory_wdata;
-    assign  o_wb_we = r_we;
+    assign  o_wb_we = w_memory_mem_write;
     assign  o_wb_sel = w_memory_sel;
-    assign  o_wb_stb = r_stb;
-    assign  o_wb_cyc = r_cyc;
+    assign  o_wb_stb = (w_memory_mem_write | w_memory_mem_read);
+    assign  o_wb_cyc = (w_memory_mem_write | w_memory_mem_read);
 
     assign  o_inst_addr = w_fetch_pc[(`TCM_ADDR_WIDTH+1):2];
-
-`ifdef TO_SIM
-// DEBUG
-    reg [127:0] dbg_ascii_stage, dbg_ascii_stage_next;
-
-    always @* begin
-        dbg_ascii_stage = "";
-        if (r_stage == STAGE_FETCH)   dbg_ascii_stage = "fetch";
-        if (r_stage == STAGE_DECODE)  dbg_ascii_stage = "decode";
-        if (r_stage == STAGE_EXECUTE) dbg_ascii_stage = "execute";
-        if (r_stage == STAGE_MEMORY)  dbg_ascii_stage = "memory";
-        if (r_stage == STAGE_WRITE)   dbg_ascii_stage = "write";
-    end
-
-    always @* begin
-        dbg_ascii_stage_next = "";
-        if (r_stage_next == STAGE_FETCH)   dbg_ascii_stage_next = "fetch";
-        if (r_stage_next == STAGE_DECODE)  dbg_ascii_stage_next = "decode";
-        if (r_stage_next == STAGE_EXECUTE) dbg_ascii_stage_next = "execute";
-        if (r_stage_next == STAGE_MEMORY)  dbg_ascii_stage_next = "memory";
-        if (r_stage_next == STAGE_WRITE)   dbg_ascii_stage_next = "write";
-    end
-
-`endif
+    assign  o_data_sel = (w_memory_alu_result[`SLAVE_SEL_FROM:`SLAVE_SEL_TO] == `TCM_ADDR_SEL);
+    assign  o_data_addr = w_memory_alu_result[(`TCM_ADDR_WIDTH+1):2];
 
 endmodule
