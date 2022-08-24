@@ -50,17 +50,18 @@ module tcm
     end
 
 `ifdef OUT_REG
-    always_ff @(posedge i_clk)
+    /*always_ff @(posedge i_clk)
     begin
         r_inst_out <= r_mem[i_inst_addr];
-    end
+    end*/
 
     always_ff @(posedge i_clk)
     begin
         r_data_out <= r_mem[i_data_addr];
     end
 
-    assign o_inst = r_inst_out;
+    //assign o_inst = r_inst_out;
+    assign o_inst = r_mem[i_inst_addr];
     assign o_data = r_data_out;
 `else
     assign o_inst = r_mem[i_inst_addr];

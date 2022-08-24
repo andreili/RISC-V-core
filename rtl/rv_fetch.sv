@@ -9,7 +9,7 @@ module rv_fetch
 (
     input   wire                        i_clk,
     input   wire                        i_reset_n,
-    //input   wire                        i_stall,
+    input   wire                        i_stall,
     input   wire                        i_pc_sel,
     input   wire[31:2]                  i_pc_target,
 `ifdef MODE_STAGED
@@ -56,7 +56,7 @@ module rv_fetch
                 r_fetch_pc <= w_fetch_pc_next;
         end
     `else
-        else if ((!i_stall) & i_bus_ack)
+        else if ((!i_stall)/* & i_bus_ack*/)
         begin
             r_fetch_pc <= w_fetch_pc_next;
         end

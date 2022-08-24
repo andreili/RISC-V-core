@@ -24,6 +24,11 @@ module rv_exec
     input   wire                        i_alu_op2_sel,
     input   wire[2:0]                   i_funct3,
     input   wire[4:0]                   i_alu_ctrl,
+    input   wire[1:0]                   i_bp_rs1,
+    input   wire[1:0]                   i_bp_rs2,
+    input   wire[31:0]                  i_memory_rd_val,
+    input   wire[31:0]                  i_write_rd_val,
+    input   wire[31:0]                  i_write_back_rd_val,
 
     output  wire[31:0]                  o_alu_result,
     output  wire                        o_reg_write,
@@ -109,9 +114,31 @@ module rv_exec
         end
     end
 
+    reg[31:0]   r_bp1, r_bp2;
+
+    always_comb
+    begin
+        case (i_bp_rs1)
+        `STAGED_BP_MEMORY  : r_bp1 = i_memory_rd_val;
+        `STAGED_BP_WRITE   : r_bp1 = i_write_rd_val;
+        `STAGED_BP_WRITE_BK: r_bp1 = i_write_back_rd_val;
+        default:             r_bp1 = r_rs1_val;
+        endcase
+    end
+
+    always_comb
+    begin
+        case (i_bp_rs2)
+        `STAGED_BP_MEMORY  : r_bp2 = i_memory_rd_val;
+        `STAGED_BP_WRITE   : r_bp2 = i_write_rd_val;
+        `STAGED_BP_WRITE_BK: r_bp2 = i_write_back_rd_val;
+        default:             r_bp2 = r_rs2_val;
+        endcase
+    end
+
     reg[31:0]   w_op2, w_op1;
-    assign  w_op1 = (r_alu_op1_sel == `ALU_SRC_OP1_PC)  ? { r_pc, 2'b0 } : r_rs1_val;
-    assign  w_op2 = (r_alu_op2_sel == `ALU_SRC_OP2_IMM) ? r_imm : r_rs2_val;
+    assign  w_op1 = (r_alu_op1_sel == `ALU_SRC_OP1_PC)  ? { r_pc, 2'b0 } : r_bp1;
+    assign  w_op2 = (r_alu_op2_sel == `ALU_SRC_OP2_IMM) ? r_imm : r_bp2;
 
     rv_alu
     u_alu
@@ -124,7 +151,7 @@ module rv_exec
     );
 
     assign  o_pc_src = (r_jump | (r_branch & (o_alu_result[0])));
-    wire[31:2]  w_pc = r_pc_sel ? r_rs1_val[31:2] : r_pc;
+    wire[31:2]  w_pc = r_pc_sel ? r_bp1[31:2] : r_pc;
     assign  o_pc_target = w_pc + r_imm[31:2];
 
     assign  o_reg_write = r_reg_write;
@@ -137,5 +164,11 @@ module rv_exec
     assign  o_res_src = r_res_src;
     assign  o_funct3 = r_funct3;
     assign  o_rs2_val = r_rs2_val;
+
+    initial
+    begin
+        r_reg_write = '0;
+        r_mem_write = '0;
+    end
 
 endmodule

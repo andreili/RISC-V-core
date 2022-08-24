@@ -89,6 +89,18 @@ module rv_core
     wire[4:0]   w_write_rd;
     wire        w_write_reg_write;
 
+    reg[1:0]    w_ctrl_bp_rs1, w_ctrl_bp_rs2;
+    reg         r_write_back_reg_write;
+    reg[4:0]    r_write_back_rd;
+    reg[31:0]   r_write_back_rd_val;
+
+    always_ff @(posedge i_clk)
+    begin
+        r_write_back_reg_write <= w_write_reg_write;
+        r_write_back_rd <= w_write_rd;
+        r_write_back_rd_val <= w_write_data;
+    end
+
 `ifdef MODE_STAGED
     wire    w_pre_stall;
 `endif
@@ -101,7 +113,7 @@ module rv_core
     (
         .i_clk                          (i_clk),
         .i_reset_n                      (i_reset_n),
-        //.i_stall                        (w_fetch_stall),
+        .i_stall                        (w_fetch_stall),
         .i_pc_sel                       (w_exec_pc_src),
         .i_pc_target                    (w_exec_pc_target),
     `ifdef MODE_STAGED
@@ -170,6 +182,11 @@ module rv_core
         .i_alu_op2_sel                  (w_decode_alu_op2_sel),
         .i_funct3                       (w_decode_funct3),
         .i_alu_ctrl                     (w_decode_alu_ctrl),
+        .i_bp_rs1                       (w_ctrl_bp_rs1),
+        .i_bp_rs2                       (w_ctrl_bp_rs2),
+        .i_memory_rd_val                (w_memory_alu_result),
+        .i_write_rd_val                 (w_write_data),
+        .i_write_back_rd_val            (r_write_back_rd_val),
         .o_alu_result                   (w_exec_alu_result),
         .o_reg_write                    (w_exec_reg_write),
         .o_mem_read                     (w_exec_mem_read),
@@ -262,13 +279,19 @@ module rv_core
         .i_exec_rs1                     (w_exec_rs1),
         .i_exec_rs2                     (w_exec_rs2),
         .i_exec_rd                      (w_exec_rd),
+        .i_exec_pc_sel                  (w_exec_pc_src),
+        .i_exec_res_src                 (w_exec_res_src),
         .i_memory_rd                    (w_memory_rd),
+        .i_memory_reg_write             (w_memory_reg_write),
         .i_write_rd                     (w_write_rd),
+        .i_write_reg_write              (w_write_reg_write),
+        .i_write_back_rd                (r_write_back_rd),
+        .i_write_back_reg_write         (r_write_back_reg_write),
     `ifdef MODE_STAGED
         .o_fetch_pre_stall              (w_pre_stall),
     `endif
-        //.o_decode_bp_rs1                (),
-        //.o_decode_bp_rs2                (),
+        .o_exec_bp_rs1                  (w_ctrl_bp_rs1),
+        .o_exec_bp_rs2                  (w_ctrl_bp_rs2),
         .o_fetch_stall                  (w_fetch_stall),
         .o_decode_stall                 (w_decode_stall),
         .o_decode_flush                 (w_decode_flush),
@@ -287,7 +310,7 @@ module rv_core
     assign  o_wb_cyc = (w_memory_mem_write | w_memory_mem_read);
 
     assign  o_inst_addr = w_fetch_pc[(`TCM_ADDR_WIDTH+1):2];
-    assign  o_data_sel = (w_memory_alu_result[`SLAVE_SEL_FROM:`SLAVE_SEL_TO] == `TCM_ADDR_SEL);
+    assign  o_data_sel = (w_memory_alu_result[`SLAVE_SEL_FROM:`SLAVE_SEL_TO] == `TCM_ADDR_SEL) & (w_memory_mem_write | w_memory_mem_read);
     assign  o_data_addr = w_memory_alu_result[(`TCM_ADDR_WIDTH+1):2];
 
 endmodule
