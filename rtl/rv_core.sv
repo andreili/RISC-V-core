@@ -64,6 +64,9 @@ module rv_core
     wire[2:0]   w_decode_funct3;
     wire[4:0]   w_decode_alu_ctrl;
     wire        w_decode_inv_instr;
+    wire[11:0]  w_decode_csr_idx;
+    wire        w_decode_csr_read;
+    wire        w_decode_csr_write;
 
     wire[2:0]   w_exec_funct3;
     wire[31:0]  w_exec_alu_result;
@@ -141,7 +144,10 @@ module rv_core
         .o_alu_op2_sel                  (w_decode_alu_op2_sel),
         .o_funct3                       (w_decode_funct3),
         .o_alu_ctrl                     (w_decode_alu_ctrl),
-        .o_inv_instr                    (w_decode_inv_instr)
+        .o_inv_instr                    (w_decode_inv_instr),
+        .o_csr_idx                      (w_decode_csr_idx),
+        .o_csr_read                     (w_decode_csr_read),
+        .o_csr_write                    (w_decode_csr_write)
     );
 
     rv_exec
@@ -249,6 +255,8 @@ module rv_core
         .o_data1                        (w_reg_data1),
         .o_data2                        (w_reg_data2)
     );
+
+    // TODO: w_decode_csr_idx, w_decode_csr_read, w_decode_csr_write
 
     always_ff @(posedge i_clk)
     begin

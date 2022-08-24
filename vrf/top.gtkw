@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
-[*] Mon Aug 22 20:08:02 2022
+[*] Tue Aug 23 19:07:49 2022
 [*]
 [dumpfile] "D:\Projects\RISC-V\my_core\vrf\logs_top\wave.vcd"
-[dumpfile_mtime] "Mon Aug 22 19:58:00 2022"
-[dumpfile_size] 1474221981
+[dumpfile_mtime] "Tue Aug 23 19:06:24 2022"
+[dumpfile_size] 1372003
 [savefile] "D:\Projects\RISC-V\my_core\vrf\top.gtkw"
-[timestart] 4909857
+[timestart] 95991
 [size] 1920 1017
 [pos] -9 -9
-*-8.720720 4911101 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-9.720720 97101 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.top.
 [treeopen] TOP.top.u_rv.
@@ -22,7 +22,7 @@
 TOP.top.u_rv.i_clk
 TOP.top.i_reset_n
 TOP.top.w_reset_n
-@c00200
+@c00201
 -WB BUS
 @22
 TOP.top.u_rv.o_wb_adr[31:0]
@@ -42,7 +42,7 @@ TOP.top.u_rv.o_wb_sel[3:0]
 @22
 TOP.top.u_rv.i_wb_dat[31:0]
 TOP.top.u_rv.o_wb_dat[31:0]
-@1401200
+@1401201
 -WB BUS
 @820
 TOP.top.u_rv.dbg_ascii_stage[127:0]
@@ -81,7 +81,7 @@ TOP.top.u_rv.u_st1_fetch.w_fetch_pc_next[31:2]
 TOP.top.u_rv.u_st1_fetch.w_fetch_pc_p4[31:2]
 @1401200
 -ST1_FETCH
-@800200
+@c00200
 -ST2_DECODE
 @28
 TOP.top.u_rv.u_st2_decode.i_stall
@@ -108,9 +108,9 @@ TOP.top.u_rv.u_st2_decode.w_rs2[4:0]
 @28
 TOP.top.u_rv.u_st2_decode.r_alu_op1_sel[1:0]
 TOP.top.u_rv.u_st2_decode.r_alu_op2_sel
-@1000200
+@1401200
 -ST2_DECODE
-@800200
+@c00200
 -ST3_EXEC
 @28
 TOP.top.u_rv.u_st3_exec.i_flush
@@ -144,7 +144,7 @@ TOP.top.u_rv.u_st3_exec.o_pc_src
 @22
 TOP.top.u_rv.u_st3_exec.o_pc_target[31:2]
 TOP.top.u_rv.u_st3_exec.o_alu_result[31:0]
-@1000200
+@1401200
 -ST3_EXEC
 @c00200
 -ST4_MEMORY
@@ -204,9 +204,7 @@ TOP.top.u_rv.w_write_data[31:0]
 @22
 TOP.top.u_rv.u_regs.i_rs1[4:0]
 TOP.top.u_rv.u_regs.i_rs2[4:0]
-@23
 TOP.top.u_rv.u_regs.r_data1[31:0]
-@22
 TOP.top.u_rv.u_regs.r_data2[31:0]
 TOP.top.u_rv.u_regs.o_data1[31:0]
 TOP.top.u_rv.u_regs.o_data2[31:0]
