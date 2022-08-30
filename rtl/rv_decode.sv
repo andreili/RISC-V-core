@@ -104,7 +104,7 @@ module rv_decode
         end
     end
 
-    wire[31:0]  w_instr;
+    reg[31:0]  w_instr;
     reg     r_flush;
     //reg     r_stall;
     always_ff @(posedge i_clk)
@@ -113,7 +113,13 @@ module rv_decode
         //r_stall <= i_stall;
     end
 
-    assign  w_instr = ((!i_reset_n) | r_flush) ? '0 : i_data;
+    always_comb
+    begin
+        if ((!i_reset_n) | r_flush)
+            w_instr = '0;
+        else 
+            w_instr = i_data;
+    end
 
     assign      w_op             = w_instr[6:0];
     assign      w_rd             = w_instr[11:7];
@@ -408,7 +414,7 @@ module rv_decode
     assign  o_funct3 = w_funct3;
     assign  o_alu_ctrl = w_alu_ctrl;
     assign  o_pc_sel = w_inst_jalr;
-    assign  o_inv_instr = !w_inst_supported;
+    assign  o_inv_instr = (!w_inst_supported) & (!i_flush);
     assign  o_csr_idx = w_funct12;
     assign  o_csr_read = w_csr_read;
     assign  o_csr_write = w_csr_write;

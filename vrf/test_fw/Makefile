@@ -19,6 +19,7 @@ BIN_FILE = $(WORK_DIR)/$(PROJ_NAME).bin
 HEX_FILE = $(WORK_DIR)/$(PROJ_NAME).hex
 MAP_FILE = $(WORK_DIR)/$(PROJ_NAME).map
 VH_FILE = $(WORK_DIR)/$(PROJ_NAME).vh
+MIF_FILE = $(WORK_DIR)/$(PROJ_NAME).mif
 
 ARCH_FLAGS_ALL = -march=$(DEV_ARCH) -mabi=ilp32
 ARCH_FLAGS = $(ARCH_FLAGS_ALL) -specs=nosys.specs
@@ -38,8 +39,8 @@ LIBS = -Wl,--start-group -lc -lnosys -lm -lgcc -lstdc++ -lsupc++ -Wl,--end-group
 
 PROJ_DIR := $(shell pwd)
 
-#OBJS = init.o test_main.o
-OBJS = main.o
+OBJS = init.o test_main.o
+#OBJS = main.o
 INC = .
 
 OBJECTS := $(patsubst %, $(WORK_DIR)/%, $(OBJS))
@@ -92,6 +93,10 @@ $(VH_FILE): $(BIN_FILE)
 	$(info Generate VH file)
 	@$(OBJCOPY) --verilog-data-width=4 --reverse-bytes=4 -I binary -O verilog $(BIN_FILE) $(VH_FILE)
 
+$(MIF_FILE): $(BIN_FILE)
+	$(info Generate MIF file)
+	@./mem_init_gen.py -i -of MIF --width 4 $(BIN_FILE) > $(MIF_FILE)
+
 $(WORK_DIR):
 	$(info Create work directory)
 	@mkdir -p  $(WORK_DIR)
@@ -101,7 +106,7 @@ clean:
 	$(info Delete work directory)
 	@$(RM) $(WORK_DIR)
 
-secondary-outputs: size.stdout $(LIST_FILE) $(BIN_FILE) $(VH_FILE)
+secondary-outputs: size.stdout $(LIST_FILE) $(BIN_FILE) $(VH_FILE) $(MIF_FILE)
 
 .PHONY: all clean
 .SECONDARY:

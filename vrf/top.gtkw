@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
-[*] Tue Aug 30 14:45:19 2022
+[*] Tue Aug 30 21:12:58 2022
 [*]
 [dumpfile] "D:\Projects\RISC-V\my_core\vrf\logs_top\wave.vcd"
-[dumpfile_mtime] "Tue Aug 30 14:41:39 2022"
-[dumpfile_size] 192351693
+[dumpfile_mtime] "Tue Aug 30 21:12:33 2022"
+[dumpfile_size] 189651993
 [savefile] "D:\Projects\RISC-V\my_core\vrf\top.gtkw"
 [timestart] 1
 [size] 1920 1017
 [pos] -9 -9
-*-20.461443 31301 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-20.461443 28622 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.top.
 [treeopen] TOP.top.u_rv.
@@ -51,6 +51,19 @@ TOP.top.u_rv.u_st2_decode.dbg_ascii_instr[127:0]
 TOP.top.u_rv.u_st2_decode.o_inv_instr
 @c00200
 -TCM
+@28
+TOP.top.u_rv.w_tcm_data_sel
+TOP.top.u_rv.w_memory_mem_write
+TOP.top.u_rv.w_tcm_data_we
+@22
+TOP.top.u_rv.u_tcm.i_data_addr[22:2]
+TOP.top.u_rv.u_tcm.i_data_write[3:0]
+TOP.top.u_rv.u_tcm.o_data[31:0]
+TOP.top.u_rv.u_tcm.i_inst_addr[22:2]
+@28
+TOP.top.u_rv.u_tcm.i_inst_stall
+@22
+TOP.top.u_rv.u_tcm.o_inst[31:0]
 @1401200
 -TCM
 @c00200
@@ -109,6 +122,7 @@ TOP.top.u_rv.u_st3_exec.i_bp_rs2[1:0]
 @22
 TOP.top.u_rv.u_st3_exec.i_memory_rd_val[31:0]
 TOP.top.u_rv.u_st3_exec.i_write_rd_val[31:0]
+TOP.top.u_rv.u_st3_exec.i_write_back_rd_val[31:0]
 TOP.top.u_rv.u_st3_exec.r_bp1[31:0]
 TOP.top.u_rv.u_st3_exec.r_bp2[31:0]
 TOP.top.u_rv.u_st3_exec.r_pc[31:2]
@@ -139,6 +153,7 @@ TOP.top.u_rv.u_st3_exec.w_op2[31:0]
 TOP.top.u_rv.u_st3_exec.w_zero
 TOP.top.u_rv.u_st3_exec.o_pc_src
 @22
+TOP.top.u_rv.u_st3_exec.w_pc[31:2]
 TOP.top.u_rv.u_st3_exec.o_pc_target[31:2]
 TOP.top.u_rv.u_st3_exec.o_alu_result[31:0]
 TOP.top.u_rv.u_st3_exec.o_rs2_val[31:0]
@@ -200,7 +215,7 @@ TOP.top.u_rv.w_write_reg_write
 @22
 TOP.top.u_rv.w_write_rd[4:0]
 TOP.top.u_rv.w_write_data[31:0]
-@c00200
+@c00201
 -REG FILE
 @22
 TOP.top.u_rv.u_regs.i_rs1[4:0]
@@ -240,7 +255,7 @@ TOP.top.u_rv.u_regs.r_reg_file[28][31:0]
 TOP.top.u_rv.u_regs.r_reg_file[29][31:0]
 TOP.top.u_rv.u_regs.r_reg_file[30][31:0]
 TOP.top.u_rv.u_regs.r_reg_file[31][31:0]
-@1401200
+@1401201
 -REG FILE
 @28
 (15)TOP.top.w_main_slave_sel[15:0]
@@ -279,13 +294,12 @@ TOP.top.U_UART.tx_shift_buf[7:0]
 -UART
 @28
 TOP.top.o_tx
-@c00201
+@c00200
 -CTRL
 @28
 TOP.top.u_rv.u_ctrl.i_clk
 TOP.top.u_rv.u_ctrl.i_decode_inv_instr
 @22
-TOP.top.u_rv.u_ctrl.i_decode_rd[4:0]
 TOP.top.u_rv.u_ctrl.i_decode_rs1[4:0]
 TOP.top.u_rv.u_ctrl.i_decode_rs2[4:0]
 @28
@@ -315,7 +329,7 @@ TOP.top.u_rv.u_ctrl.o_exec_bp_rs1[1:0]
 TOP.top.u_rv.u_ctrl.o_exec_bp_rs2[1:0]
 TOP.top.u_rv.u_ctrl.o_exec_flush
 TOP.top.u_rv.u_ctrl.o_fetch_stall
-@1401201
+@1401200
 -CTRL
 [pattern_trace] 1
 [pattern_trace] 0

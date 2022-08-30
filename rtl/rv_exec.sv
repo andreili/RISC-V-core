@@ -47,8 +47,8 @@ module rv_exec
 
     reg[31:2]   r_pc;
     reg[31:2]   r_pc_p4;
-    reg[31:0]   r_rs1_val;
-    reg[31:0]   r_rs2_val;
+    //reg[31:0]   r_rs1_val;
+    //reg[31:0]   r_rs2_val;
     reg[4:0]    r_rs1;
     reg[4:0]    r_rs2;
     reg[4:0]    r_rd;
@@ -72,8 +72,8 @@ module rv_exec
         begin
             r_pc <= '0;
             r_pc_p4 <= '0;
-            r_rs1_val <= '0;
-            r_rs2_val <= '0;
+            //r_rs1_val <= '0;
+            //r_rs2_val <= '0;
             r_rs1 <= '0;
             r_rs2 <= '0;
             r_rd <= '0;
@@ -94,8 +94,8 @@ module rv_exec
         begin
             r_pc <= i_pc;
             r_pc_p4 <= i_pc_p4;
-            r_rs1_val <= (|i_rs1) ? i_rs1_val : '0;
-            r_rs2_val <= (|i_rs2) ? i_rs2_val : '0;
+            //r_rs1_val <= (|i_rs1) ? i_rs1_val : '0;
+            //r_rs2_val <= (|i_rs2) ? i_rs2_val : '0;
             r_rs1 <= i_rs1;
             r_rs2 <= i_rs2;
             r_rd <= i_rd;
@@ -122,7 +122,7 @@ module rv_exec
         `STAGED_BP_MEMORY  : r_bp1 = i_memory_rd_val;
         `STAGED_BP_WRITE   : r_bp1 = i_write_rd_val;
         `STAGED_BP_WRITE_BK: r_bp1 = i_write_back_rd_val;
-        default:             r_bp1 = r_rs1_val;
+        default:             r_bp1 = (|r_rs1) ? i_rs1_val : '0;
         endcase
     end
 
@@ -132,7 +132,7 @@ module rv_exec
         `STAGED_BP_MEMORY  : r_bp2 = i_memory_rd_val;
         `STAGED_BP_WRITE   : r_bp2 = i_write_rd_val;
         `STAGED_BP_WRITE_BK: r_bp2 = i_write_back_rd_val;
-        default:             r_bp2 = r_rs2_val;
+        default:             r_bp2 = (|r_rs2) ? i_rs2_val : '0;
         endcase
     end
 

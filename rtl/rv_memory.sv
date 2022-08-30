@@ -101,4 +101,9 @@ module rv_memory
     assign  o_mem_sel = r_mem_sel;
     assign  o_wdata = r_wdata_shuffled;
 
+initial
+begin
+    r_write = '0;
+end
+
 endmodule

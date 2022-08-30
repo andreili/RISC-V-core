@@ -6,7 +6,7 @@
 
 #define SOC_UART_REG_ADDR 0x10000000
 
-#define CORE_CLOCK_SPEED (120*1000*1000)
+#define CORE_CLOCK_SPEED (80*1000*1000)
 #define UART_BAUD_RATE (115200)
 
 typedef union

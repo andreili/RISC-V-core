@@ -8,7 +8,6 @@ module rv_ctrl
     input   wire                        i_reset_n,
     input   wire[4:0]                   i_decode_rs1,
     input   wire[4:0]                   i_decode_rs2,
-    input   wire[4:0]                   i_decode_rd,
     input   wire                        i_decode_inv_instr,
     input   wire[4:0]                   i_exec_rs1,
     input   wire[4:0]                   i_exec_rs2,
@@ -20,7 +19,6 @@ module rv_ctrl
     input   wire[4:0]                   i_write_rd,
     input   wire                        i_write_reg_write,
     input   wire[4:0]                   i_write_back_rd,
-    input   wire                        i_write_back_reg_write,
 `ifdef MODE_STAGED
     //input  wire[2:0]                    o_stage,
     output  wire                        o_fetch_pre_stall,
@@ -74,12 +72,23 @@ module rv_ctrl
     assign  o_exec_flush = 1'b0;
 `else
 
+    reg         r_inv_instr;
+
+    always_ff @(posedge i_clk)
+    begin
+        if (!i_reset_n)
+            r_inv_instr <= '0;
+        else if (i_decode_inv_instr)
+            r_inv_instr <= '1;
+    end
+
     wire    w_load_stall;
     wire    w_rs1_from_memory, w_rs1_from_write, w_rs1_from_write_back;
     wire    w_rs2_from_memory, w_rs2_from_write, w_rs2_from_write_back;
 
-    assign  w_load_stall = ((i_exec_res_src == `RESULT_SRC_MEMORY) | (i_exec_res_src == `RESULT_SRC_TCM)) &
-                            ((i_decode_rs1 == i_exec_rd) || (i_decode_rs2 == i_exec_rd));
+    assign  w_load_stall = /*r_inv_instr |*/
+                            (((i_exec_res_src == `RESULT_SRC_MEMORY) | (i_exec_res_src == `RESULT_SRC_TCM)) &
+                             ((i_decode_rs1 == i_exec_rd) || (i_decode_rs2 == i_exec_rd)));
 
     assign  w_rs1_from_memory      = i_memory_reg_write & (|i_exec_rs1) & (i_exec_rs1 == i_memory_rd);
     assign  w_rs1_from_write       = i_write_reg_write  & (|i_exec_rs1) & (i_exec_rs1 == i_write_rd);
@@ -112,7 +121,7 @@ module rv_ctrl
     assign  o_exec_bp_rs2 = r_bp_rs2;
     assign  o_fetch_stall  = w_load_stall;
     assign  o_decode_stall = w_load_stall;
-    assign  o_decode_flush = i_exec_pc_sel;
+    assign  o_decode_flush = /*r_inv_instr | */i_exec_pc_sel;
     assign  o_exec_flush   = i_exec_pc_sel | w_load_stall;
 
 `endif

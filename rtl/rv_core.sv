@@ -87,13 +87,11 @@ module rv_core
     wire        w_write_reg_write;
 
     reg[1:0]    w_ctrl_bp_rs1, w_ctrl_bp_rs2;
-    reg         r_write_back_reg_write;
     reg[4:0]    r_write_back_rd;
     reg[31:0]   r_write_back_rd_val;
 
     always_ff @(posedge i_clk)
     begin
-        r_write_back_reg_write <= w_write_reg_write;
         r_write_back_rd <= w_write_rd;
         r_write_back_rd_val <= w_write_data;
     end
@@ -271,7 +269,6 @@ module rv_core
         .i_reset_n                      (i_reset_n),
         .i_decode_rs1                   (w_decode_rs1),
         .i_decode_rs2                   (w_decode_rs2),
-        .i_decode_rd                    (w_decode_rd),
         .i_decode_inv_instr             (w_decode_inv_instr),
         .i_exec_rs1                     (w_exec_rs1),
         .i_exec_rs2                     (w_exec_rs2),
@@ -283,7 +280,6 @@ module rv_core
         .i_write_rd                     (w_write_rd),
         .i_write_reg_write              (w_write_reg_write),
         .i_write_back_rd                (r_write_back_rd),
-        .i_write_back_reg_write         (r_write_back_reg_write),
     `ifdef MODE_STAGED
         .o_fetch_pre_stall              (w_pre_stall),
     `endif
@@ -299,6 +295,7 @@ module rv_core
     wire        w_tcm_data_sel;
 
     assign  w_tcm_data_sel = (w_memory_alu_result[`SLAVE_SEL_FROM:`SLAVE_SEL_TO] == `TCM_ADDR_SEL) & (w_memory_mem_write | w_memory_mem_read);
+    wire    w_tcm_data_we = w_tcm_data_sel & w_memory_mem_write;
 
     tcm
     #(
@@ -309,11 +306,11 @@ module rv_core
         .i_clk                          (i_clk),
         .i_inst_addr                    (w_fetch_pc[(`TCM_ADDR_WIDTH+1):2]),
         .i_inst_stall                   (w_fetch_stall),
+        .i_inst_write                   ('0),
         .o_inst                         (w_tcm_instr),
-        .i_data_sel                     (w_tcm_data_sel),
+        //.i_data_sel                     (w_tcm_data_sel),
         .i_data_addr                    (w_memory_alu_result[(`TCM_ADDR_WIDTH+1):2]),
-        .i_data_write                   (w_memory_mem_write),
-        .i_data_mask                    (w_memory_sel),
+        .i_data_write                   (w_memory_sel & { 4{w_tcm_data_we} }),
         .i_data                         (w_memory_wdata),
         .o_data                         (w_tcm_rdata)
     );
