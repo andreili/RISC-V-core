@@ -21,19 +21,16 @@ module rv_core
     output  wire[3:0]                   o_wb_sel,
     output  wire                        o_wb_stb,
     input   wire                        i_wb_ack,
-    output  wire                        o_wb_cyc,
-    //
-    output  wire[(`TCM_ADDR_WIDTH+1):2] o_inst_addr,
-    input   wire[31:0]                  i_inst,
-    output  wire                        o_data_sel,
-    output  wire[(`TCM_ADDR_WIDTH+1):2] o_data_addr,
-    input   wire[31:0]                  i_memory_data
+    output  wire                        o_wb_cyc
 );
 
     wire    w_fetch_stall;
     wire    w_decode_stall;
     wire    w_decode_flush;
     wire    w_exec_flush;
+
+    wire[31:0]  w_tcm_instr;
+    wire[31:0]  w_tcm_rdata;
 
     wire[31:2]  w_fetch_pc;
     wire[31:2]  w_fetch_pc_p4;
@@ -131,7 +128,7 @@ module rv_core
         .i_stall                        (w_decode_stall),
         .i_flush                        (w_decode_flush),
         //.i_bus_ack                      (i_wb_ack),
-        .i_data                         (i_inst),
+        .i_data                         (w_tcm_instr),
         .i_pc                           (w_fetch_pc),
         .i_pc_p4                        (w_fetch_pc_p4),
         .o_rs1                          (w_decode_rs1),
@@ -236,7 +233,7 @@ module rv_core
         .i_clk                          (i_clk),
         //.i_reset_n                      (i_reset_n),
         .i_data                         (i_wb_dat),
-        .i_memory_data                  (i_memory_data),
+        .i_memory_data                  (w_tcm_rdata),
         .i_alu_result                   (w_memory_alu_result),
         .i_reg_write                    (w_memory_reg_write),
         .i_rd                           (w_memory_rd),
@@ -299,6 +296,28 @@ module rv_core
         .o_exec_flush                   (w_exec_flush)
     );
 
+    wire        w_tcm_data_sel;
+
+    assign  w_tcm_data_sel = (w_memory_alu_result[`SLAVE_SEL_FROM:`SLAVE_SEL_TO] == `TCM_ADDR_SEL) & (w_memory_mem_write | w_memory_mem_read);
+
+    tcm
+    #(
+        .MEM_ADDR_WIDTH                 (`TCM_ADDR_WIDTH)
+    )
+    u_tcm
+    (
+        .i_clk                          (i_clk),
+        .i_inst_addr                    (w_fetch_pc[(`TCM_ADDR_WIDTH+1):2]),
+        .i_inst_stall                   (w_fetch_stall),
+        .o_inst                         (w_tcm_instr),
+        .i_data_sel                     (w_tcm_data_sel),
+        .i_data_addr                    (w_memory_alu_result[(`TCM_ADDR_WIDTH+1):2]),
+        .i_data_write                   (w_memory_mem_write),
+        .i_data_mask                    (w_memory_sel),
+        .i_data                         (w_memory_wdata),
+        .o_data                         (w_tcm_rdata)
+    );
+
     // TODO: w_decode_csr_idx, w_decode_csr_read, w_decode_csr_write
 
 // WB BUS assignments
@@ -308,9 +327,5 @@ module rv_core
     assign  o_wb_sel = w_memory_sel;
     assign  o_wb_stb = (w_memory_mem_write | w_memory_mem_read);
     assign  o_wb_cyc = (w_memory_mem_write | w_memory_mem_read);
-
-    assign  o_inst_addr = w_fetch_pc[(`TCM_ADDR_WIDTH+1):2];
-    assign  o_data_sel = (w_memory_alu_result[`SLAVE_SEL_FROM:`SLAVE_SEL_TO] == `TCM_ADDR_SEL) & (w_memory_mem_write | w_memory_mem_read);
-    assign  o_data_addr = w_memory_alu_result[(`TCM_ADDR_WIDTH+1):2];
 
 endmodule

@@ -50,12 +50,6 @@ module top
     wire        w_wb_cyc;
     wire        w_wb_ack;
 
-    wire[(`TCM_ADDR_WIDTH+1):2] w_tcm_inst_addr;
-    wire[31:0]  w_tcm_inst_data;
-    wire        w_tcm_data_sel;
-    wire[(`TCM_ADDR_WIDTH+1):2] w_tcm_data_addr;
-    wire[31:0]  w_tcm_data_read;
-
     debounce
     #(
         .LENGTH                         (4)
@@ -83,12 +77,7 @@ module top
         .o_wb_sel                       (w_wb_sel),
         .o_wb_stb                       (w_wb_stb),
         .i_wb_ack                       (w_wb_ack),
-        .o_wb_cyc                       (w_wb_cyc),
-        .o_inst_addr                    (w_tcm_inst_addr),
-        .i_inst                         (w_tcm_inst_data),
-        .o_data_sel                     (w_tcm_data_sel),
-        .o_data_addr                    (w_tcm_data_addr),
-        .i_memory_data                  (w_tcm_data_read)
+        .o_wb_cyc                       (w_wb_cyc)
     );
 
     localparam MAIN_NIC_SLAVES_COUNT    = 2 ** `SLAVE_SEL_WIDTH;
@@ -120,23 +109,6 @@ module top
         .o_slave_sel                    (w_main_slave_sel),
         .o_rdata                        (w_wb_rdata),
         .o_ack                          (w_wb_ack)
-    );
-
-    tcm
-    #(
-        .MEM_ADDR_WIDTH                 (`TCM_ADDR_WIDTH)
-    )
-    u_tcm
-    (
-        .i_clk                          (w_clk),
-        .i_inst_addr                    (w_tcm_inst_addr),
-        .o_inst                         (w_tcm_inst_data),
-        .i_data_sel                     (w_tcm_data_sel),
-        .i_data_addr                    (w_tcm_data_addr),
-        .i_data_write                   (w_wb_we),
-        .i_data_mask                    (w_wb_sel),
-        .i_data                         (w_wb_wdata),
-        .o_data                         (w_tcm_data_read)
     );
 
     wire    w_uart_txen;

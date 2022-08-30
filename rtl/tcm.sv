@@ -9,6 +9,7 @@ module tcm
     input   wire                        i_clk,
     //
     input   wire[(MEM_ADDR_WIDTH+1):2]  i_inst_addr,
+    input   wire                        i_inst_stall,
     output  wire[31:0]                  o_inst,
     //
     input   wire                        i_data_sel,
@@ -52,7 +53,8 @@ module tcm
 `ifdef OUT_REG
     always_ff @(posedge i_clk)
     begin
-        r_inst_out <= r_mem[i_inst_addr];
+        if (!i_inst_stall)
+            r_inst_out <= r_mem[i_inst_addr];
     end
 
     always_ff @(posedge i_clk)

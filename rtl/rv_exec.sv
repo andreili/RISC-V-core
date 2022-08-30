@@ -163,7 +163,7 @@ module rv_exec
     assign  o_pc_p4 = r_pc_p4;
     assign  o_res_src = r_res_src;
     assign  o_funct3 = r_funct3;
-    assign  o_rs2_val = r_rs2_val;
+    assign  o_rs2_val = r_bp2;
 
     initial
     begin
