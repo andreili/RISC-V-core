@@ -41,6 +41,10 @@ RVTEST_DEFINES = -march=rv32i -mabi=ilp32
 
 include $(ROOTDIR)/riscv-test-suite/Makefile.include
 
+obj_dir/Vtop:
+	@rm -rf logs_top obj_dir
+	@$(VERILATOR) $(VERILATOR_FLAGS) -CFLAGS "-I../tb/ -DTOP_NAME=top" -DTO_SIM -f input.vc top.sv tb/tb.cpp sim_top.cpp
+
 rv%:
 	@echo "--- Prepare test $@ ---"
 	@rm -rf logs_$@ obj_dir
@@ -52,9 +56,7 @@ rv%:
 	@echo "--- Test $@ finished ---"
 	gtkwave -a $@.gtkw -6 -7 logs_$@/wave.vcd
 
-top:
-	@rm -rf logs logs_$@ obj_dir
-	@$(VERILATOR) $(VERILATOR_FLAGS) -CFLAGS "-I../tb/ -DTOP_NAME=$@" -DTO_SIM -f input.vc $@.sv tb/tb.cpp sim_$@.cpp
+top: obj_dir/Vtop
 	@mkdir -p logs_$@
 	obj_dir/Vtop +trace
 	@rm -rf obj_dir
@@ -63,9 +65,10 @@ top:
 #	$(VERILATOR_COVERAGE) --annotate logs/annotated logs/coverage.dat
 	gtkwave -a $@.gtkw -6 -7 logs_$@/wave.vcd
 
-obj_dir/Vtop:
-	@rm -rf logs_top obj_dir
-	@$(VERILATOR) $(VERILATOR_FLAGS) -CFLAGS "-I../tb/ -DTOP_NAME=top" -DTO_SIM -f input.vc top.sv tb/tb.cpp sim_top.cpp
+dhry: obj_dir/Vtop
+	@obj_dir/Vtop +trace +TEST_FW=dhrystone/out/dhrystone.vh
+	@rm -rf obj_dir
+	@mv logs_top/wave.vcd $@.vcd
 
 test_%: $(work_dir_isa)/%.vh obj_dir/Vtop
 	@obj_dir/Vtop +trace +TEST_FW=$< && ([ $$? -eq 0 ] && echo "$@ success!") || (echo "$@ failure!" && gtkwave -a top.gtkw -6 -7 logs_top/wave.vcd && exit 1)

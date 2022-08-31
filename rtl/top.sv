@@ -7,6 +7,9 @@ module top
 `ifdef TO_SIM
     output  wire[31:0]                  o_x1,
     output  wire[31:0]                  o_x2,
+    output  wire[31:0]                  o_wb_addr,
+    output  wire                        o_wb_we,
+    output  wire[31:0]                  o_wb_wdata,
 `endif
     input   wire                        i_rx,
     output  wire                        o_tx
@@ -15,31 +18,6 @@ module top
 `include "rv_defines.vh"
 
     wire    w_clk, w_locked;
-
-`ifndef TO_SIM
-`ifdef QUARTUS
-    pll
-    u_pll
-    (
-        .refclk                         (i_clk),
-        .rst                            ('0),
-        .outclk_0                       (w_clk),
-        .locked                         (w_locked)
-    );
-`else
-    clk_wiz_0
-    u_pll
-    (
-        .clk_in1                        (i_clk),
-        .clk_out1                       (w_clk),
-        .locked                         (w_locked)
-    );
-`endif
-`else
-    assign  w_clk = i_clk;
-    assign  w_locked = '1;
-`endif
-
     wire        w_reset_n;
     wire[31:0]  w_wb_addr;
     wire[31:0]  w_wb_wdata;
@@ -49,6 +27,33 @@ module top
     wire        w_wb_stb;
     wire        w_wb_cyc;
     wire        w_wb_ack;
+
+`ifndef TO_SIM
+  `ifdef QUARTUS
+    pll
+    u_pll
+    (
+        .refclk                         (i_clk),
+        .rst                            ('0),
+        .outclk_0                       (w_clk),
+        .locked                         (w_locked)
+    );
+  `else
+    clk_wiz_0
+    u_pll
+    (
+        .clk_in1                        (i_clk),
+        .clk_out1                       (w_clk),
+        .locked                         (w_locked)
+    );
+  `endif
+`else
+    assign  w_clk = i_clk;
+    assign  w_locked = '1;
+    assign  o_wb_addr = w_wb_addr;
+    assign  o_wb_we = w_wb_we;
+    assign  o_wb_wdata = w_wb_wdata;
+`endif
 
     debounce
     #(
