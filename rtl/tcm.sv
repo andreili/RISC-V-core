@@ -23,18 +23,19 @@ module tcm
     localparam  MEM_SIZE = 2 ** MEM_ADDR_WIDTH;
 
 `ifdef QUARTUS
+    wire[3:0] w_data_mask = (|i_data_write) ? i_data_write : '1;
     altsyncram
     altsyncram_component
     (
         .address_a (i_data_addr),
         .address_b (i_inst_addr),
-        .byteena_a (i_data_mask),
+        .byteena_a (w_data_mask),
         .clock0 (i_clk),
-        .data_a (r_wdata),
-        .data_b ('0),
+        .data_a (i_data),
+        .data_b ({32{1'b0}}),
         .rden_a ('0),
         .rden_b (!i_inst_stall),
-        .wren_a (i_data_write),
+        .wren_a (|i_data_write),
         .wren_b ('0),
         .q_a (o_data),
         .q_b (o_inst),
@@ -60,8 +61,8 @@ module tcm
         altsyncram_component.init_file = "../../vrf/test_fw/out/risc.mif",
         altsyncram_component.intended_device_family = "Cyclone V",
         altsyncram_component.lpm_type = "altsyncram",
-        altsyncram_component.numwords_a = 4096,
-        altsyncram_component.numwords_b = 4096,
+        altsyncram_component.numwords_a = MEM_SIZE,
+        altsyncram_component.numwords_b = MEM_SIZE,
         altsyncram_component.operation_mode = "BIDIR_DUAL_PORT",
         altsyncram_component.outdata_aclr_a = "NONE",
         altsyncram_component.outdata_aclr_b = "NONE",
@@ -71,8 +72,8 @@ module tcm
         altsyncram_component.read_during_write_mode_mixed_ports = "DONT_CARE",
         altsyncram_component.read_during_write_mode_port_a = "NEW_DATA_NO_NBE_READ",
         altsyncram_component.read_during_write_mode_port_b = "NEW_DATA_NO_NBE_READ",
-        altsyncram_component.widthad_a = 12,
-        altsyncram_component.widthad_b = 12,
+        altsyncram_component.widthad_a = MEM_ADDR_WIDTH,
+        altsyncram_component.widthad_b = MEM_ADDR_WIDTH,
         altsyncram_component.width_a = 32,
         altsyncram_component.width_b = 32,
         altsyncram_component.width_byteena_a = 4,

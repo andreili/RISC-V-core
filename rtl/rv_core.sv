@@ -87,11 +87,13 @@ module rv_core
     wire        w_write_reg_write;
 
     reg[1:0]    w_ctrl_bp_rs1, w_ctrl_bp_rs2;
+    reg         r_write_back_write;
     reg[4:0]    r_write_back_rd;
     reg[31:0]   r_write_back_rd_val;
 
     always_ff @(posedge i_clk)
     begin
+        r_write_back_write <= w_write_reg_write;
         r_write_back_rd <= w_write_rd;
         r_write_back_rd_val <= w_write_data;
     end
@@ -279,6 +281,7 @@ module rv_core
         .i_memory_reg_write             (w_memory_reg_write),
         .i_write_rd                     (w_write_rd),
         .i_write_reg_write              (w_write_reg_write),
+        .i_write_back_write             (r_write_back_write),
         .i_write_back_rd                (r_write_back_rd),
     `ifdef MODE_STAGED
         .o_fetch_pre_stall              (w_pre_stall),

@@ -18,6 +18,7 @@ module rv_ctrl
     input   wire                        i_memory_reg_write,
     input   wire[4:0]                   i_write_rd,
     input   wire                        i_write_reg_write,
+    input   wire                        i_write_back_write,
     input   wire[4:0]                   i_write_back_rd,
 `ifdef MODE_STAGED
     //input  wire[2:0]                    o_stage,
@@ -54,7 +55,7 @@ module rv_ctrl
     begin : next_stage
         case (r_stage)
             STAGE_FETCH:    r_stage_next = STAGE_DECODE;
-            STAGE_DECODE:   r_stage_next = i_decode_inv_instr ? STAGE_DECODE : STAGE_EXECUTE;
+            STAGE_DECODE:   r_stage_next = /*i_decode_inv_instr ? STAGE_DECODE : */STAGE_EXECUTE;
             STAGE_EXECUTE:  r_stage_next = STAGE_MEMORY;
             STAGE_MEMORY:   r_stage_next = /*(i_wb_ack) ?*/ STAGE_WRITE/* : STAGE_MEMORY*/;
             STAGE_WRITE:    r_stage_next = STAGE_FETCH;
@@ -92,10 +93,10 @@ module rv_ctrl
 
     assign  w_rs1_from_memory      = i_memory_reg_write & (|i_exec_rs1) & (i_exec_rs1 == i_memory_rd);
     assign  w_rs1_from_write       = i_write_reg_write  & (|i_exec_rs1) & (i_exec_rs1 == i_write_rd);
-    assign  w_rs1_from_write_back  = i_write_reg_write  & (|i_exec_rs1) & (i_exec_rs1 == i_write_back_rd);
+    assign  w_rs1_from_write_back  = i_write_back_write & (|i_exec_rs1) & (i_exec_rs1 == i_write_back_rd);
     assign  w_rs2_from_memory      = i_memory_reg_write & (|i_exec_rs2) & (i_exec_rs2 == i_memory_rd);
     assign  w_rs2_from_write       = i_write_reg_write  & (|i_exec_rs2) & (i_exec_rs2 == i_write_rd);
-    assign  w_rs2_from_write_back  = i_write_reg_write  & (|i_exec_rs2) & (i_exec_rs2 == i_write_back_rd);
+    assign  w_rs2_from_write_back  = i_write_back_write & (|i_exec_rs2) & (i_exec_rs2 == i_write_back_rd);
 
     reg[1:0]    r_bp_rs1, r_bp_rs2;
 
@@ -129,7 +130,7 @@ module rv_ctrl
 `ifdef TO_SIM
 `ifdef MODE_STAGED
 // DEBUG
-    reg [10:0] dbg_ascii_stage, dbg_ascii_stage_next;
+    reg [127:0] dbg_ascii_stage, dbg_ascii_stage_next;
 
     always @* begin
         dbg_ascii_stage = "";
