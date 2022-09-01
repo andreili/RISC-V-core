@@ -27,10 +27,12 @@ module rv_decode
     output  wire                        o_alu_op2_sel,
     output  wire[2:0]                   o_funct3,
     output  wire[4:0]                   o_alu_ctrl,
-    output  wire                        o_inv_instr,
+`ifdef EXTENSION_Zicsr
     output  wire[11:0]                  o_csr_idx,
-    output  wire                        o_csr_read,
-    output  wire                        o_csr_write
+    output  wire[1:0]                   o_csr_op,
+    output  wire                        o_csr_sel,
+`endif
+    output  wire                        o_inv_instr
 );
 
 `include "rv_defines.vh"
@@ -44,8 +46,8 @@ module rv_decode
     wire[2:0]   w_funct3;
     wire[4:0]   w_rs1, w_rs2;
     wire[6:0]   w_funct7;
-    wire[11:0]  w_funct12;
     reg[31:0]   w_imm;
+    wire[11:0]  w_funct12;
 
     wire        w_reg_write;
     reg[1:0]    w_res_src;
@@ -65,7 +67,9 @@ module rv_decode
     wire    w_inst_jalr;
     wire    w_inst_jal;
     wire    w_inst_ecall, w_inst_ebreak;
+`ifdef EXTENSION_Zicsr
     wire    w_inst_csrrw, w_inst_csrrs, w_inst_csrrc, w_inst_csrrwi, w_inst_csrrsi, w_inst_csrrci;
+`endif
 
     wire    w_inst_fence, w_inst_fence_i;
 
@@ -88,7 +92,10 @@ module rv_decode
     wire    w_inst_grp_misc_mem;
     wire    w_inst_grp_system;
 
-    wire    w_csr_read, w_csr_write;
+`ifdef EXTENSION_Zicsr
+    reg[1:0]    r_csr_op;
+    reg         r_csr_sel;
+`endif
 
     always_ff @(posedge i_clk)
     begin
@@ -141,7 +148,11 @@ module rv_decode
             w_inst_beq   | w_inst_bne  | w_inst_blt  | w_inst_bge   | w_inst_bltu | w_inst_bgeu |
             w_inst_jalr  |
             w_inst_jal   |
-            w_inst_fence | w_inst_fence_i;
+            w_inst_fence | w_inst_fence_i
+        `ifdef EXTENSION_Zicsr
+            | w_inst_csrrw | w_inst_csrrs | w_inst_csrrc | w_inst_csrrwi | w_inst_csrrsi | w_inst_csrrci
+        `endif
+            ;
 
     assign  w_inst_full = (w_op[1:0] == 2'b11);
 
@@ -209,12 +220,14 @@ module rv_decode
     // system
     assign  w_inst_ecall    = w_inst_grp_system & (w_funct3 == 3'b000) & (w_funct12 == 12'b000000000000);
     assign  w_inst_ebreak   = w_inst_grp_system & (w_funct3 == 3'b000) & (w_funct12 == 12'b000000000001);
+`ifdef EXTENSION_Zicsr
     assign  w_inst_csrrw    = w_inst_grp_system & (w_funct3 == 3'b001);
     assign  w_inst_csrrs    = w_inst_grp_system & (w_funct3 == 3'b010);
     assign  w_inst_csrrc    = w_inst_grp_system & (w_funct3 == 3'b011);
     assign  w_inst_csrrwi   = w_inst_grp_system & (w_funct3 == 3'b101);
     assign  w_inst_csrrsi   = w_inst_grp_system & (w_funct3 == 3'b110);
     assign  w_inst_csrrci   = w_inst_grp_system & (w_funct3 == 3'b111);
+`endif
 
     assign  w_inst_load = w_inst_lb | w_inst_lh | w_inst_lw | w_inst_lbu | w_inst_lhu;
     assign  w_inst_store = w_inst_sb | w_inst_sh | w_inst_sw;
@@ -237,6 +250,10 @@ module rv_decode
             w_imm = { {20{w_instr[31]}}, w_instr[7], w_instr[30:25], w_instr[11:8], 1'b0 };
         w_inst_store:
             w_imm = { {21{w_instr[31]}}, w_instr[30:25], w_instr[11:7] };
+    `ifdef EXTENSION_Zicsr
+        |{w_inst_csrrwi, w_inst_csrrsi, w_inst_csrrci}:
+            w_imm = { {27{1'b0}}, w_instr[19:15] };
+    `endif
         default:w_imm = 'x;
         endcase
     end
@@ -311,10 +328,24 @@ module rv_decode
         endcase
     end
 
-    assign  w_csr_read = (w_inst_csrrw  & (|w_rd)) | w_inst_csrrs  | w_inst_csrrc |
-                         (w_inst_csrrwi & (|w_rd)) | w_inst_csrrsi | w_inst_csrrci;
-    assign  w_csr_write = w_inst_csrrw  | ((w_inst_csrrs   | w_inst_csrrc ) & (|w_rs1)) |
-                          w_inst_csrrwi | ((w_inst_csrrsi  | w_inst_csrrci) & (|w_rs1));
+`ifdef EXTENSION_Zicsr
+    always_comb
+    begin
+        case (1'b1)
+        |{w_inst_csrrw, w_inst_csrrwi}: r_csr_op = `CSR_OP_RW;
+        |{w_inst_csrrs, w_inst_csrrsi}: r_csr_op = `CSR_OP_RS;
+        |{w_inst_csrrc, w_inst_csrrci}: r_csr_op = `CSR_OP_RC;
+        default:                        r_csr_op = `CSR_OP_NONE;
+        endcase
+    end
+    always_comb
+    begin
+        case (1'b1)
+        |{w_inst_csrrwi, w_inst_csrrsi, w_inst_csrrci}: r_csr_sel = `CSR_SRC_SEL_IMM;
+        default:                                        r_csr_sel = `CSR_SRC_SEL_REG;
+        endcase
+    end
+`endif
 
 `ifdef TO_SIM
 	reg [127:0] dbg_ascii_alu_ctrl;
@@ -388,12 +419,14 @@ module rv_decode
 		if (w_inst_ecall)    dbg_ascii_instr = "ecall";
 		if (w_inst_ebreak)   dbg_ascii_instr = "ebreak";
         
+    `ifdef EXTENSION_Zicsr
 		if (w_inst_csrrw)    dbg_ascii_instr = "csrrw";
 		if (w_inst_csrrs)    dbg_ascii_instr = "csrrs";
 		if (w_inst_csrrc)    dbg_ascii_instr = "csrrc";
 		if (w_inst_csrrwi)   dbg_ascii_instr = "csrrwi";
 		if (w_inst_csrrsi)   dbg_ascii_instr = "csrrsi";
 		if (w_inst_csrrci)   dbg_ascii_instr = "csrrci";
+    `endif
 	end
 `endif
 
@@ -415,8 +448,10 @@ module rv_decode
     assign  o_alu_ctrl = w_alu_ctrl;
     assign  o_pc_sel = w_inst_jalr;
     assign  o_inv_instr = (!w_inst_supported) & (!i_flush);
+`ifdef EXTENSION_Zicsr
     assign  o_csr_idx = w_funct12;
-    assign  o_csr_read = w_csr_read;
-    assign  o_csr_write = w_csr_write;
+    assign  o_csr_op = r_csr_op;
+    assign  o_csr_sel = r_csr_sel;
+`endif
 
 endmodule

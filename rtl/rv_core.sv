@@ -53,9 +53,12 @@ module rv_core
     wire[2:0]   w_decode_funct3;
     wire[4:0]   w_decode_alu_ctrl;
     wire        w_decode_inv_instr;
+`ifdef EXTENSION_Zicsr
     wire[11:0]  w_decode_csr_idx;
-    wire        w_decode_csr_read;
-    wire        w_decode_csr_write;
+    wire[1:0]   w_decode_csr_op;
+    wire        w_decode_csr_sel;
+    wire[31:0]  w_csr_rdata;
+`endif
 
     wire[2:0]   w_exec_funct3;
     wire[31:0]  w_exec_alu_result;
@@ -148,10 +151,12 @@ module rv_core
         .o_alu_op2_sel                  (w_decode_alu_op2_sel),
         .o_funct3                       (w_decode_funct3),
         .o_alu_ctrl                     (w_decode_alu_ctrl),
-        .o_inv_instr                    (w_decode_inv_instr),
+    `ifdef EXTENSION_Zicsr
         .o_csr_idx                      (w_decode_csr_idx),
-        .o_csr_read                     (w_decode_csr_read),
-        .o_csr_write                    (w_decode_csr_write)
+        .o_csr_op                       (w_decode_csr_op),
+        .o_csr_sel                      (w_decode_csr_sel),
+    `endif
+        .o_inv_instr                    (w_decode_inv_instr)
     );
 
     rv_exec
@@ -295,6 +300,22 @@ module rv_core
         .o_exec_flush                   (w_exec_flush)
     );
 
+`ifdef EXTENSION_Zicsr
+    rv_csr
+    u_csr
+    (
+        .i_clk                          (i_clk),
+        .i_reset_n                      (i_reset_n),
+        .i_flush                        (w_exec_flush),
+        .i_idx                          (w_decode_csr_idx),
+        .i_op                           (w_decode_csr_op),
+        .i_sel                          (w_decode_csr_sel),
+        .i_imm                          (w_decode_imm[4:0]),
+        .i_data                         (w_reg_data1),
+        .o_data                         (w_csr_rdata)
+    );
+`endif
+
     wire        w_tcm_data_sel;
 
     assign  w_tcm_data_sel = (w_memory_alu_result[`SLAVE_SEL_FROM:`SLAVE_SEL_TO] == `TCM_ADDR_SEL) & (w_memory_mem_write | w_memory_mem_read);
@@ -318,7 +339,9 @@ module rv_core
         .o_data                         (w_tcm_rdata)
     );
 
+`ifdef EXTENSION_Zicsr
     // TODO: w_decode_csr_idx, w_decode_csr_read, w_decode_csr_write
+`endif
 
 // WB BUS assignments
     assign  o_wb_adr = w_memory_alu_result;

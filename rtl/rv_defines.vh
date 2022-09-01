@@ -1,5 +1,13 @@
 //`define MODE_STAGED
 
+`define EXTENSION_Zicsr
+
+`ifdef EXTENSION_Zicsr
+    `define EXTENSION_Zicntr
+    `define EXTENSION_Zihpm
+    //`define EXTENSION_Zicntr
+`endif
+
 `define STAGED_BP_MEMORY    2'b11
 `define STAGED_BP_WRITE_BK  2'b10
 `define STAGED_BP_WRITE     2'b01
@@ -33,6 +41,14 @@
 `define ALU_CTRL_OR         4'b1101
 `define ALU_CTRL_AND        4'b1110
 //`define ALU_CTRL_CMP        4'b1111
+
+`define CSR_OP_NONE         2'b00
+`define CSR_OP_RW           2'b01
+`define CSR_OP_RS           2'b10
+`define CSR_OP_RC           2'b11
+
+`define CSR_SRC_SEL_REG     1'b0
+`define CSR_SRC_SEL_IMM     1'b1
 
 `ifdef TO_SIM
     `define TCM_ADDR_WIDTH      21
