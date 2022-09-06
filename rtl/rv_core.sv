@@ -9,10 +9,6 @@ module rv_core
 (
     input   wire                        i_clk,
     input   wire                        i_reset_n,
-`ifdef TO_SIM
-    output  wire[31:0]                  o_x1,
-    output  wire[31:0]                  o_x2,
-`endif
     //
     output  wire[31:0]                  o_wb_adr,
     output  wire[31:0]                  o_wb_dat,
@@ -261,10 +257,6 @@ module rv_core
         .i_rd                           (w_write_rd),
         .i_write                        (w_write_reg_write),
         .i_data                         (w_write_data),
-    `ifdef TO_SIM
-        .o_x1                           (o_x1),
-        .o_x2                           (o_x2),
-    `endif
         .o_data1                        (w_reg_data1),
         .o_data2                        (w_reg_data2)
     );
@@ -301,12 +293,15 @@ module rv_core
     );
 
 `ifdef EXTENSION_Zicsr
+    wire    w_instr_finished = (w_write_reg_write | w_exec_mem_write | w_decode_branch);
+
     rv_csr
     u_csr
     (
         .i_clk                          (i_clk),
         .i_reset_n                      (i_reset_n),
         .i_flush                        (w_exec_flush),
+        .i_instruction_executed         (w_instr_finished),
         .i_idx                          (w_decode_csr_idx),
         .i_op                           (w_decode_csr_op),
         .i_sel                          (w_decode_csr_sel),

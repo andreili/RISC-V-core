@@ -24,4 +24,5 @@ bss_end:
     # copy .DATA
     # TODO
 
+    csrr x1, 10
     j entry_point

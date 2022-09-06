@@ -9,10 +9,6 @@ module rv_regs
     input   wire[4:0]                   i_rd,
     input   wire                        i_write,
     input   wire[31:0]                  i_data,
-`ifdef TO_SIM
-    output  wire[31:0]                  o_x1,
-    output  wire[31:0]                  o_x2,
-`endif
     output  wire[31:0]                  o_data1,
     output  wire[31:0]                  o_data2
 );
@@ -33,9 +29,6 @@ module rv_regs
     assign  o_data2 = r_data2;
 
 `ifdef TO_SIM
-    assign  o_x1 = r_reg_file[1];
-    assign  o_x2 = r_reg_file[2];
-
     initial begin
         r_reg_file[1] = 0;
         r_reg_file[2] = 0;

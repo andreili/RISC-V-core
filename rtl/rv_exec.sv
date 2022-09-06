@@ -116,6 +116,10 @@ module rv_exec
 
     reg[31:0]   r_bp1, r_bp2;
 
+`ifdef MODE_STAGED
+    assign  r_bp1 = (|r_rs1) ? i_rs1_val : '0;
+    assign  r_bp2 = (|r_rs2) ? i_rs2_val : '0;
+`else
     always_comb
     begin
         case (i_bp_rs1)
@@ -135,6 +139,7 @@ module rv_exec
         default:             r_bp2 = (|r_rs2) ? i_rs2_val : '0;
         endcase
     end
+`endif
 
     reg[31:0]   w_op2, w_op1;
     assign  w_op1 = (r_alu_op1_sel == `ALU_SRC_OP1_PC)  ? { r_pc, 2'b0 } : r_bp1;

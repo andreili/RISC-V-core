@@ -5,8 +5,6 @@ module top
     input   wire                        i_clk,
     input   wire                        i_reset_n,
 `ifdef TO_SIM
-    output  wire[31:0]                  o_x1,
-    output  wire[31:0]                  o_x2,
     output  wire[31:0]                  o_wb_addr,
     output  wire                        o_wb_we,
     output  wire[31:0]                  o_wb_wdata,
@@ -71,10 +69,6 @@ module top
     (
         .i_clk                          (w_clk),
         .i_reset_n                      (w_reset_n),
-    `ifdef TO_SIM
-        .o_x1                           (o_x1),
-        .o_x2                           (o_x2),
-    `endif
         .o_wb_adr                       (w_wb_addr),
         .o_wb_dat                       (w_wb_wdata),
         .i_wb_dat                       (w_wb_rdata),
@@ -97,8 +91,8 @@ module top
 
     assign  w_main_slave_rdata[0] = '0;
     assign  w_main_slave_ack  [0] = '1;
-    assign  w_main_slave_rdata[(MAIN_NIC_SLAVES_COUNT-1):2] = '0;
-    assign  w_main_slave_ack  [(MAIN_NIC_SLAVES_COUNT-1):2] = '0;
+    assign  w_main_slave_rdata[(MAIN_NIC_SLAVES_COUNT-1):3] = '0;
+    assign  w_main_slave_ack  [(MAIN_NIC_SLAVES_COUNT-1):3] = '0;
 
     nic
     #(
@@ -136,5 +130,19 @@ module top
         .o_txd                          (o_tx),
         .o_txen                         (w_uart_txen)
     );
+
+    reg[31:0]   r_cnt;
+    always_ff @(posedge w_clk)
+    begin
+        r_cnt <= r_cnt + 1'b1;
+    end
+
+    assign  w_main_slave_ack[2] = '1;
+    assign  w_main_slave_rdata[2] = r_cnt;
+
+initial
+begin
+    r_cnt = '0;
+end
 
 endmodule

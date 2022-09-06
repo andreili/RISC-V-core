@@ -54,25 +54,31 @@ int main(int argc, char** argv, char** env)
     TOP_CLASS* top = tb->get_top();
     prev_marker = 0x5a5a;
 
+    const char* cycles_str = tb->get_context()->commandArgsPlusMatch("cycles");
+    uint32_t cycles = (uint32_t)-1;
+    if (strlen(cycles_str) > 8)
+    {
+        cycles_str += 8;
+        cycles = atoi(cycles_str);
+    }
+
     // wait for reset
     top->i_reset_n = 0;
     tb->run_steps(20 * TICK_TIME);
     top->i_reset_n = 1;
 
     int ret = -1;
-    //for (int i=0 ; i<SIM_TIME_MAX ; ++i)
-    while (1)
+    for (int i=0 ; i<cycles ; ++i)
     {
         if (!tb->run_steps(TICK_TIME))
         {
             ret = 0;
             break;
         }
-        if ((top->o_x1 == 0xa5a5a5a5) & (top->o_x2 == 0x5a5a5a5a))
-        {
-            ret = 0;
-            break;
-        }
+    }
+    if (cycles != (uint32_t)-1)
+    {
+        ret = 0;
     }
 
     tb->finish();

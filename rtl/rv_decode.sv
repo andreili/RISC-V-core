@@ -69,6 +69,7 @@ module rv_decode
     wire    w_inst_ecall, w_inst_ebreak;
 `ifdef EXTENSION_Zicsr
     wire    w_inst_csrrw, w_inst_csrrs, w_inst_csrrc, w_inst_csrrwi, w_inst_csrrsi, w_inst_csrrci;
+    wire    w_inst_csr;
 `endif
 
     wire    w_inst_fence, w_inst_fence_i;
@@ -238,6 +239,9 @@ module rv_decode
     assign  w_inst_reg  = w_inst_add   | w_inst_sub  | w_inst_sll  | w_inst_slt   | w_inst_sltu |
                 w_inst_xor   | w_inst_srl  | w_inst_sra  | w_inst_or    | w_inst_and;
     assign  w_inst_branch =  w_inst_beq   | w_inst_bne  | w_inst_blt  | w_inst_bge   | w_inst_bltu | w_inst_bgeu;
+`ifdef EXTENSION_Zicsr
+    assign  w_inst_csr = w_inst_csrrw | w_inst_csrrs | w_inst_csrrc | w_inst_csrrwi | w_inst_csrrsi | w_inst_csrrci;
+`endif
 
     always_comb
     begin
@@ -260,7 +264,11 @@ module rv_decode
         endcase
     end
 
-    assign w_reg_write = w_inst_load | w_inst_imm | w_inst_auipc | w_inst_reg | w_inst_lui | w_inst_jalr | w_inst_jal;
+    assign w_reg_write = w_inst_load | w_inst_imm | w_inst_auipc | w_inst_reg | w_inst_lui | w_inst_jalr | w_inst_jal
+`ifdef EXTENSION_Zicsr
+                        | w_inst_csr
+`endif
+    ;
 
     always_comb
     begin
