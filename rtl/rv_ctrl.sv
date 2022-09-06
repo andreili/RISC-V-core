@@ -55,7 +55,7 @@ module rv_ctrl
     begin : next_stage
         case (r_stage)
             STAGE_FETCH:    r_stage_next = STAGE_DECODE;
-            STAGE_DECODE:   r_stage_next = /*i_decode_inv_instr ? STAGE_DECODE : */STAGE_EXECUTE;
+            STAGE_DECODE:   r_stage_next = i_decode_inv_instr ? STAGE_DECODE : STAGE_EXECUTE;
             STAGE_EXECUTE:  r_stage_next = STAGE_MEMORY;
             STAGE_MEMORY:   r_stage_next = /*(i_wb_ack) ?*/ STAGE_WRITE/* : STAGE_MEMORY*/;
             STAGE_WRITE:    r_stage_next = STAGE_FETCH;
@@ -74,20 +74,26 @@ module rv_ctrl
 `else
 
     reg         r_inv_instr;
+    reg[1:0]    r_reset;
 
     always_ff @(posedge i_clk)
     begin
         if (!i_reset_n)
             r_inv_instr <= '0;
-        else if (i_decode_inv_instr)
+        else if (i_decode_inv_instr & (!o_decode_flush))
             r_inv_instr <= '1;
+    end
+
+    always_ff @(posedge i_clk)
+    begin
+        r_reset <= { r_reset[0], !i_reset_n };
     end
 
     wire    w_load_stall;
     wire    w_rs1_from_memory, w_rs1_from_write, w_rs1_from_write_back;
     wire    w_rs2_from_memory, w_rs2_from_write, w_rs2_from_write_back;
 
-    assign  w_load_stall = /*r_inv_instr |*/
+    assign  w_load_stall = r_inv_instr |
                             (((i_exec_res_src == `RESULT_SRC_MEMORY) | (i_exec_res_src == `RESULT_SRC_TCM)) &
                              ((i_decode_rs1 == i_exec_rd) || (i_decode_rs2 == i_exec_rd)));
 
@@ -122,8 +128,8 @@ module rv_ctrl
     assign  o_exec_bp_rs2 = r_bp_rs2;
     assign  o_fetch_stall  = w_load_stall;
     assign  o_decode_stall = w_load_stall;
-    assign  o_decode_flush = /*r_inv_instr | */i_exec_pc_sel;
-    assign  o_exec_flush   = i_exec_pc_sel | w_load_stall;
+    assign  o_decode_flush = r_inv_instr | i_exec_pc_sel | r_reset[0];
+    assign  o_exec_flush   = i_exec_pc_sel | w_load_stall | r_reset[1];
 
 `endif
 

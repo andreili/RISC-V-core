@@ -54,7 +54,7 @@ module rv_decode
     reg         r_alu_op1_sel;
     reg         r_alu_op2_sel;
 
-    wire    w_inst_supported;
+    wire    w_inst_none, w_inst_supported;
     wire    w_inst_lb, w_inst_lh, w_inst_lw, w_inst_lbu, w_inst_lhu;
     wire    w_inst_addi, w_inst_slli, w_inst_slti, w_inst_sltiu;
     wire    w_inst_xori, w_inst_srli, w_inst_srai, w_inst_ori, w_inst_andi;
@@ -137,6 +137,7 @@ module rv_decode
     assign      w_funct12        = w_instr[31:20];
 
     assign  w_inst_supported = 
+            w_inst_none |
             w_inst_lb    | w_inst_lh   | w_inst_lw   | w_inst_lbu   | w_inst_lhu  |
             w_inst_addi  | w_inst_slli | w_inst_slti | w_inst_sltiu |
             w_inst_xori  | w_inst_srli | w_inst_srai | w_inst_ori   | w_inst_andi |
@@ -156,6 +157,7 @@ module rv_decode
 
     assign  w_inst_full = (w_op[1:0] == 2'b11);
 
+    assign  w_inst_none = !(|w_instr);
     // instructions groups
     assign  w_inst_grp_load     = (w_op[6:2] == 5'b00000) & w_inst_full;
     assign  w_inst_grp_misc_mem = (w_op[6:2] == 5'b00011) & w_inst_full;
@@ -371,6 +373,8 @@ module rv_decode
 	always @* begin
 		dbg_ascii_instr = "";
 
+        if (w_inst_none)     dbg_ascii_instr = "NONE";
+
 		if (w_inst_lui)      dbg_ascii_instr = "lui";
 		if (w_inst_auipc)    dbg_ascii_instr = "auipc";
 		if (w_inst_jal)      dbg_ascii_instr = "jal";
@@ -447,7 +451,7 @@ module rv_decode
     assign  o_funct3 = w_funct3;
     assign  o_alu_ctrl = w_alu_ctrl;
     assign  o_pc_sel = w_inst_jalr;
-    assign  o_inv_instr = (!w_inst_supported) & (!i_flush);
+    assign  o_inv_instr = !w_inst_supported;
 `ifdef EXTENSION_Zicsr
     assign  o_csr_idx = w_funct12;
     assign  o_csr_op = r_csr_op;
