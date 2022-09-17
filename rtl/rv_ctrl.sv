@@ -6,6 +6,7 @@ module rv_ctrl
 (
     input   wire                        i_clk,
     input   wire                        i_reset_n,
+    input   wire                        i_fetch_bus_ack,
     input   wire[4:0]                   i_decode_rs1,
     input   wire[4:0]                   i_decode_rs2,
     input   wire                        i_decode_inv_instr,
@@ -93,7 +94,7 @@ module rv_ctrl
     wire    w_rs1_from_memory, w_rs1_from_write, w_rs1_from_write_back;
     wire    w_rs2_from_memory, w_rs2_from_write, w_rs2_from_write_back;
 
-    assign  w_load_stall = r_inv_instr |
+    assign  w_load_stall = r_inv_instr | (!i_fetch_bus_ack) |
                             (((i_exec_res_src == `RESULT_SRC_MEMORY) | (i_exec_res_src == `RESULT_SRC_TCM)) &
                              ((i_decode_rs1 == i_exec_rd) || (i_decode_rs2 == i_exec_rd)));
 

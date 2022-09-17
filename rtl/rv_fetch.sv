@@ -23,8 +23,6 @@ module rv_fetch
     wire[31:2]  w_fetch_pc_next;
     wire[31:2]  w_fetch_pc_p4;
     reg[31:0]   r_rdata;
-    wire        w_bus_request;
-    reg         r_bus_request;
 
 `ifdef MODE_STAGED
     // staged core workarround
@@ -56,7 +54,7 @@ module rv_fetch
                 r_fetch_pc <= w_fetch_pc_next;
         end
     `else
-        else if ((!i_stall)/* & i_bus_ack*/)
+        else if ((!i_stall) || i_pc_sel/* & i_bus_ack*/)
         begin
             r_fetch_pc <= w_fetch_pc_next;
         end

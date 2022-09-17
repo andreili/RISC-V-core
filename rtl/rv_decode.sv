@@ -114,11 +114,15 @@ module rv_decode
 
     reg[31:0]  w_instr;
     reg     r_flush;
-    //reg     r_stall;
+    reg     r_stall;
     always_ff @(posedge i_clk)
     begin
         r_flush <= i_flush;
-        //r_stall <= i_stall;
+        r_stall <= i_stall;
+        if (!r_stall)
+        begin
+            r_instr <= i_data;
+        end
     end
 
     always_comb
@@ -126,7 +130,7 @@ module rv_decode
         if ((!i_reset_n) | r_flush)
             w_instr = '0;
         else 
-            w_instr = i_data;
+            w_instr = r_stall ? r_instr : i_data;
     end
 
     assign      w_op             = w_instr[6:0];
@@ -360,7 +364,7 @@ module rv_decode
 `ifdef TO_SIM
 	reg [127:0] dbg_ascii_alu_ctrl;
 	always @* begin
-		dbg_ascii_alu_ctrl = "";
+		dbg_ascii_alu_ctrl = '0;
         if (w_alu_ctrl[3:0] == `ALU_CMP_EQ) dbg_ascii_alu_ctrl = "EQ";
         if (w_alu_ctrl[3:0] == `ALU_CMP_LTS) dbg_ascii_alu_ctrl = "LTS";
         if (w_alu_ctrl[3:0] == `ALU_CMP_LTU) dbg_ascii_alu_ctrl = "LTU";
@@ -379,7 +383,7 @@ module rv_decode
 
 	reg [127:0] dbg_ascii_instr;
 	always @* begin
-		dbg_ascii_instr = "";
+		dbg_ascii_instr = '0;
 
         if (w_inst_none)     dbg_ascii_instr = "NONE";
 

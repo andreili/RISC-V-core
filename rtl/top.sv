@@ -80,7 +80,7 @@ module top
     );
 
     localparam MAIN_NIC_SLAVES_COUNT    = 2 ** `SLAVE_SEL_WIDTH;
-    //localparam MAIN_NIC_SLAVE_TCM       = 0;
+    localparam MAIN_NIC_SLAVE_TCM       = 0;
     localparam MAIN_NIC_SLAVE_UART      = 1;
     //localparam MAIN_NIC_SLAVE_I2C       = 2;
     //localparam MAIN_NIC_SLAVE_CCM       = 3;
@@ -89,10 +89,9 @@ module top
     wire[(MAIN_NIC_SLAVES_COUNT-1):0]   w_main_slave_ack;
     wire[(MAIN_NIC_SLAVES_COUNT-1):0][31:0]	w_main_slave_rdata;
 
-    assign  w_main_slave_rdata[0] = '0;
-    assign  w_main_slave_ack  [0] = '1;
     assign  w_main_slave_rdata[(MAIN_NIC_SLAVES_COUNT-1):3] = '0;
     assign  w_main_slave_ack  [(MAIN_NIC_SLAVES_COUNT-1):3] = '0;
+    assign  w_main_slave_ack[15] = '1;
 
     nic
     #(
@@ -109,6 +108,21 @@ module top
         .o_rdata                        (w_wb_rdata),
         .o_ack                          (w_wb_ack)
     );
+
+    tcm
+    #(
+        .MEM_ADDR_WIDTH                 (`TCM_ADDR_WIDTH)
+    )
+    u_tcm
+    (
+        .i_clk                          (w_clk),
+        .i_addr                         (w_wb_addr[(`TCM_ADDR_WIDTH+1):2]),
+        .i_write                        (w_wb_sel & { 4{w_wb_we} }),
+        .i_data                         (w_wb_wdata),
+        .o_data                         (w_main_slave_rdata[MAIN_NIC_SLAVE_TCM])
+    );
+    assign  w_main_slave_rdata[0] = '0;
+    assign  w_main_slave_ack  [0] = '1;
 
     wire    w_uart_txen;
 
