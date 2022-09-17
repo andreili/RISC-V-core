@@ -16,7 +16,6 @@
 `define RESULT_SRC_ALU      2'b00
 `define RESULT_SRC_MEMORY   2'b01
 `define RESULT_SRC_PC_P4    2'b10
-`define RESULT_SRC_TCM      2'b11
 
 `define ALU_SRC_OP1_REG     1'b0
 `define ALU_SRC_OP1_PC      1'b1

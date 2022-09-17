@@ -109,6 +109,7 @@ module rv_decode
         begin
             r_pc <= i_pc;
             r_pc_p4 <= i_pc_p4;
+            r_instr <= i_data;
         end
     end
 
@@ -119,10 +120,6 @@ module rv_decode
     begin
         r_flush <= i_flush;
         r_stall <= i_stall;
-        if (!r_stall)
-        begin
-            r_instr <= i_data;
-        end
     end
 
     always_comb
@@ -130,7 +127,7 @@ module rv_decode
         if ((!i_reset_n) | r_flush)
             w_instr = '0;
         else 
-            w_instr = r_stall ? r_instr : i_data;
+            w_instr = r_instr;
     end
 
     assign      w_op             = w_instr[6:0];

@@ -53,7 +53,7 @@ module tcm
         altsyncram_component.width_byteena_a = 4;
 `else
     reg[31:0]   r_mem[MEM_SIZE];
-    reg[31:0]   r_out;
+    //reg[31:0]   r_out;
 
     always_ff @(posedge i_clk)
     begin
@@ -61,10 +61,10 @@ module tcm
         if (i_write[1]) r_mem[i_addr][ 8+:8] <= i_data[ 8+:8];
         if (i_write[2]) r_mem[i_addr][16+:8] <= i_data[16+:8];
         if (i_write[3]) r_mem[i_addr][24+:8] <= i_data[24+:8];
-        r_out <= r_mem[i_addr];
+        //r_out <= r_mem[i_addr];
     end
 
-    assign o_data = r_out;
+    assign o_data = r_mem[i_addr];//r_out;
 `endif
 
     initial

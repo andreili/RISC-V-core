@@ -232,7 +232,6 @@ module rv_core
         .i_clk                          (i_clk),
         //.i_reset_n                      (i_reset_n),
         .i_data                         (i_wb_dat),
-        .i_memory_data                  (i_wb_dat),
         .i_alu_result                   (w_memory_alu_result),
         .i_reg_write                    (w_memory_reg_write),
         .i_rd                           (w_memory_rd),

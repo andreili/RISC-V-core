@@ -95,7 +95,7 @@ module rv_ctrl
     wire    w_rs2_from_memory, w_rs2_from_write, w_rs2_from_write_back;
 
     assign  w_load_stall = r_inv_instr | (!i_fetch_bus_ack) |
-                            (((i_exec_res_src == `RESULT_SRC_MEMORY) | (i_exec_res_src == `RESULT_SRC_TCM)) &
+                            ((i_exec_res_src == `RESULT_SRC_MEMORY) &
                              ((i_decode_rs1 == i_exec_rd) || (i_decode_rs2 == i_exec_rd)));
 
     assign  w_rs1_from_memory      = i_memory_reg_write & (|i_exec_rs1) & (i_exec_rs1 == i_memory_rd);
