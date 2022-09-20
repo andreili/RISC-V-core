@@ -1,0 +1,3 @@
+[submodule "vrf/riscv-arch-test"]
+	path = vrf/riscv-arch-test
+	url = https://github.com/andreili/riscv-arch-test
