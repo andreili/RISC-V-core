@@ -1,6 +1,6 @@
 #pragma once
 #include <verilated.h>
-#include <verilated_vcd_c.h>
+#include <verilated_fst_c.h>
 #include <string>
 #include <functional>
 
@@ -28,7 +28,6 @@ public:
     void init(step_cb_t on_step = nullptr);
 
     VerilatedContext* get_context() { return m_context; }
-    VerilatedVcdC* get_vcd() { return m_vcd; }
     TOP_CLASS* get_top() { return m_top; }
 
     bool step();
@@ -36,7 +35,7 @@ public:
     void finish();
 private:
     VerilatedContext*   m_context;
-    VerilatedVcdC*      m_vcd;
+    VerilatedFstC*      m_fst;
     std::string         m_log_name;
     TOP_CLASS*          m_top;
     step_cb_t           m_step_cb;

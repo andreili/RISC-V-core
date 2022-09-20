@@ -14,7 +14,7 @@ VERILATOR_FLAGS += -x-assign fast
 # Warn abount lint issues; may not want this on less solid designs
 VERILATOR_FLAGS += -Wall
 # Make waveforms
-VERILATOR_FLAGS += --trace
+VERILATOR_FLAGS += --trace-fst
 # Check SystemVerilog assertions
 VERILATOR_FLAGS += --assert
 # Generate coverage analysis
@@ -54,7 +54,7 @@ rv%:
 	@obj_dir/V$@ +trace || (exit 1)
 	@rm -rf obj_dir
 	@echo "--- Test $@ finished ---"
-	gtkwave -a $@.gtkw -6 -7 logs_$@/wave.vcd
+	gtkwave -a $@.gtkw -6 -7 logs_$@/wave.fst
 
 top: obj_dir/Vtop
 	@mkdir -p logs_$@
@@ -63,16 +63,16 @@ top: obj_dir/Vtop
 #	@echo "-- COVERAGE ----------------"
 #	@rm -rf logs/annotated
 #	$(VERILATOR_COVERAGE) --annotate logs/annotated logs/coverage.dat
-	gtkwave -a $@.gtkw -6 -7 logs_$@/wave.vcd
+	/mnt/c/msys64/mingw32/bin/gtkwave.exe -a $@.gtkw -6 -7 logs_$@/wave.fst
 
 dhry: obj_dir/Vtop
 	@obj_dir/Vtop +trace +TEST_FW=dhrystone/out/dhrystone.vh
 	@rm -rf obj_dir
-	@mv logs_top/wave.vcd $@.vcd
+	@mv logs_top/wave.fst $@.fst
 
 test_%: $(work_dir_isa)/%.vh obj_dir/Vtop
-	@obj_dir/Vtop +trace +TEST_FW=$< && ([ $$? -eq 0 ] && echo "$@ success!") || (echo "$@ failure!" && gtkwave -a top.gtkw -6 -7 logs_top/wave.vcd && exit 1)
-	@mv logs_top/wave.vcd $@.vcd
+	@obj_dir/Vtop +trace +TEST_FW=$< && ([ $$? -eq 0 ] && echo "$@ success!") || (echo "$@ failure!" && gtkwave -a top.gtkw -6 -7 logs_top/wave.fst && exit 1)
+	@mv logs_top/wave.fst $@.fst
 	@rm -rf logs_top
 
 tests_ls = $(addprefix test_,$(tests_name))

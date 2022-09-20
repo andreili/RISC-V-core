@@ -23,9 +23,9 @@ bool TB::step()
     m_context->timeInc(1);
     uint64_t cur_time = m_context->time();
     bool ret_val;
-    if (m_vcd != nullptr)
+    if (m_fst != nullptr)
     {
-        m_vcd->dump(cur_time);
+        m_fst->dump(cur_time);
     }
     if (m_step_cb != nullptr)
     {
@@ -53,9 +53,9 @@ bool TB::run_steps(uint64_t steps)
 
 void TB::finish()
 {
-    if (m_vcd != nullptr)
+    if (m_fst != nullptr)
     {
-        m_vcd->close();
+        m_fst->close();
     }
 }
 
@@ -69,12 +69,12 @@ void TB::parse_args_trace()
     const char* arg = m_context->commandArgsPlusMatch("trace");
     if (strlen(arg) > 0)
     {
-        m_vcd = new VerilatedVcdC();
-        m_top->trace(m_vcd, 99);
-        m_vcd->open((m_log_name + "/wave.vcd").c_str());
+        m_fst = new VerilatedFstC();
+        m_top->trace(m_fst, 99);
+        m_fst->open((m_log_name + "/wave.fst").c_str());
     }
     else
     {
-        m_vcd = nullptr;
+        m_fst = nullptr;
     }
 }
