@@ -18,7 +18,7 @@
 
 #include CONCAT(TOP_CLASS,.h)
 
-typedef std::function<bool(uint64_t,TOP_CLASS*)> step_cb_t;
+typedef std::function<int(uint64_t,TOP_CLASS*)> step_cb_t;
 
 class TB
 {
@@ -30,8 +30,8 @@ public:
     VerilatedContext* get_context() { return m_context; }
     TOP_CLASS* get_top() { return m_top; }
 
-    bool step();
-    bool run_steps(uint64_t steps);
+    int step();
+    int run_steps(uint64_t steps);
     void finish();
 private:
     VerilatedContext*   m_context;

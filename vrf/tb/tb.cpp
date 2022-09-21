@@ -18,11 +18,11 @@ void TB::init(step_cb_t on_step)
     m_step_cb = on_step;
 }
 
-bool TB::step()
+int TB::step()
 {
     m_context->timeInc(1);
     uint64_t cur_time = m_context->time();
-    bool ret_val;
+    int ret_val;
     if (m_fst != nullptr)
     {
         m_fst->dump(cur_time);
@@ -33,22 +33,23 @@ bool TB::step()
     }
     else
     {
-        ret_val = true;
+        ret_val = 0;
     }
     m_top->eval();
     return ret_val;
 }
 
-bool TB::run_steps(uint64_t steps)
+int TB::run_steps(uint64_t steps)
 {
     for (uint64_t i=0 ; i<steps ; ++i)
     {
-        if(!step())
+        int ret = step();
+        if(ret != 0)
         {
-            return false;
+            return ret;
         }
     }
-    return true;
+    return 0;
 }
 
 void TB::finish()

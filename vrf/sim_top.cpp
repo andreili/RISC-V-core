@@ -10,7 +10,7 @@ double sc_time_stamp() { return 0; }
 
 uint32_t prev_marker;
 
-bool on_step_cb(uint64_t time, TOP_CLASS* p_top)
+int on_step_cb(uint64_t time, TOP_CLASS* p_top)
 {
     if ((time % TICK_PERIOD) == 0)
     {
@@ -28,10 +28,10 @@ bool on_step_cb(uint64_t time, TOP_CLASS* p_top)
                     {
                     case 0xf0:
                         printf("Finished. Ok.\n");
-                        return false;
+                        return 1;
                     case 0xf1:
                         printf("Finished. Failed.\n");
-                        return false;
+                        return -1;
                     }
                 }
                 else
@@ -44,7 +44,7 @@ bool on_step_cb(uint64_t time, TOP_CLASS* p_top)
 
         p_top->i_clk = !p_top->i_clk;
     }
-    return true;
+    return 0;
 }
 
 int main(int argc, char** argv, char** env)
@@ -70,13 +70,18 @@ int main(int argc, char** argv, char** env)
     int ret = -1;
     for (int i=0 ; i<cycles ; ++i)
     {
-        if (!tb->run_steps(TICK_TIME))
+        ret = tb->run_steps(TICK_TIME);
+        if (ret != 0)
         {
-            ret = 0;
             break;
         }
     }
     if (cycles != (uint32_t)-1)
+    {
+        ret = 0;
+    }
+
+    if (ret == 1)
     {
         ret = 0;
     }
