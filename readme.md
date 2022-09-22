@@ -11,7 +11,7 @@ For instrutions and data, core have a TCM memory with individual bus.
  - M extension.
  - F extension.
 - Interrupts.
-- One bus for all (WB) - to remove a TCM and use a simple SRAM.
+- Add support for all modes on cache.
 
 # Verification
 Core have a ready verification envionment (vrf) and using a verilator software.
