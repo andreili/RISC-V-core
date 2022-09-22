@@ -66,6 +66,7 @@ top: obj_dir/Vtop
 	/mnt/c/msys64/mingw32/bin/gtkwave.exe -a $@.gtkw -6 -7 logs_$@/wave.fst
 
 dhry: obj_dir/Vtop
+	@echo "--- Run benchmark ---"
 	@obj_dir/Vtop +trace +TEST_FW=dhrystone/out/dhrystone.vh
 	@rm -rf obj_dir
 	@mv logs_top/wave.fst $@.fst

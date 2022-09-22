@@ -1,4 +1,5 @@
 //`define MODE_STAGED
+`define DCACHE_USE
 
 `define EXTENSION_Zicsr
 

@@ -83,6 +83,12 @@ module rv_core
     wire[4:0]   w_write_rd;
     wire        w_write_reg_write;
 
+`ifdef DCACHE_USE
+    wire[31:0]  w_dcache_data;
+    wire        w_dcache_ack;
+    wire        w_dcache_miss;
+`endif
+
     reg[1:0]    w_ctrl_bp_rs1, w_ctrl_bp_rs2;
     reg         r_write_back_write;
     reg[4:0]    r_write_back_rd;
@@ -231,7 +237,11 @@ module rv_core
     (
         .i_clk                          (i_clk),
         //.i_reset_n                      (i_reset_n),
+    `ifdef DCACHE_USE
+        .i_data                         (w_dcache_data),
+    `else
         .i_data                         (i_wb_dat),
+    `endif
         .i_alu_result                   (w_memory_alu_result),
         .i_reg_write                    (w_memory_reg_write),
         .i_rd                           (w_memory_rd),
@@ -309,9 +319,38 @@ module rv_core
     );
 `endif
 
+`ifdef DCACHE_USE
+    rv_cache
+    #(
+        .LINE_COUNT_BIT                 (0),
+        .LINE_SIZE_BIT                  (0),
+        .SET_COUNT_BIT                  (5)
+    )
+    u_dcache
+    (
+        .i_clk                          (i_clk),
+        .i_reset_n                      (i_reset_n),
+        .i_addr                         (w_memory_alu_result),
+        .i_read                         (w_memory_mem_read),
+        .i_write                        (w_memory_mem_write),
+        .i_bus_data                     (i_wb_dat),
+        .i_write_sel                    (w_memory_mem_read ? '1 : w_memory_sel),
+        .i_write_data                   (w_memory_wdata),
+        .i_bus_ack                      (i_wb_ack),
+        .i_data                         ('0),
+        .o_data                         (w_dcache_data),
+        .o_miss                         (w_dcache_miss),
+        .o_ack                          (w_dcache_ack)
+    );
+`endif
+
     wire    w_memory_bus;
     
+`ifdef DCACHE_USE
+    assign  w_memory_bus = w_dcache_miss;
+`else
     assign  w_memory_bus = (w_memory_mem_write | w_memory_mem_read);
+`endif
     assign  w_fetch_ack = (!w_memory_bus) & i_wb_ack;
 
 // WB BUS assignments
