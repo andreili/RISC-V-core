@@ -1,5 +1,5 @@
 # RISC-V core
-This is my hobby project for deeper study of Verolog and CPU architecture
+This is my hobby project for deeper study of SystemVerilog and CPU architecture
 
 # Overviev
 Core supported two modes - staged and pipelined. On staged mode, one instruction executed on 5 ticks of main clock. This behavior controlled by defines on defines.vh (MODE_STAGED).
