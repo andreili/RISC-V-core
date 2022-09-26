@@ -324,7 +324,8 @@ module rv_core
     #(
         .LINE_COUNT_BIT                 (0),
         .LINE_SIZE_BIT                  (0),
-        .SET_COUNT_BIT                  (5)
+        .SET_COUNT_BIT                  (9),
+        .ADDR_HI                        (4'h0)  // only TCM region is covered by data cache
     )
     u_dcache
     (
@@ -345,12 +346,12 @@ module rv_core
 `endif
 
     wire    w_memory_bus;
-    
+
+    assign  w_memory_bus = 
 `ifdef DCACHE_USE
-    assign  w_memory_bus = w_dcache_miss;
-`else
-    assign  w_memory_bus = (w_memory_mem_write | w_memory_mem_read);
+                            w_dcache_miss & 
 `endif
+                            (w_memory_mem_write | w_memory_mem_read);
     assign  w_fetch_ack = (!w_memory_bus) & i_wb_ack;
 
 // WB BUS assignments
