@@ -1,19 +1,19 @@
 [*]
 [*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
-[*] Mon Sep 26 18:22:40 2022
+[*] Sat Oct 01 19:16:02 2022
 [*]
-[dumpfile] "C:\Users\andreil\Documents\RISC-V-core\vrf\dhry.fst"
-[dumpfile_mtime] "Mon Sep 26 18:02:55 2022"
-[dumpfile_size] 10556689
-[savefile] "C:\Users\andreil\Documents\RISC-V-core\vrf\top.gtkw"
-[timestart] 1
+[dumpfile] "D:\Projects\RISC-V\my_core\vrf\dhry.fst"
+[dumpfile_mtime] "Sat Oct 01 19:10:38 2022"
+[dumpfile_size] 12132452
+[savefile] "D:\Projects\RISC-V\my_core\vrf\top.gtkw"
+[timestart] 1217406
 [size] 1920 1017
 [pos] -1 -1
-*-8.915804 203 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-2.901678 1217452 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.top.
 [treeopen] TOP.top.u_rv.
-[treeopen] TOP.top.u_rv.u_dcache.
+[treeopen] TOP.top.u_rv.u_icache.
 [treeopen] TOP.top.u_rv.u_st3_exec.
 [sst_width] 205
 [signals_width] 305
@@ -23,7 +23,7 @@
 TOP.top.u_rv.i_clk
 TOP.top.i_reset_n
 TOP.top.w_reset_n
-@800200
+@c00200
 -WB BUS
 @22
 TOP.top.u_rv.o_wb_adr[31:0]
@@ -44,7 +44,7 @@ TOP.top.u_rv.o_wb_sel[3:0]
 @22
 TOP.top.u_rv.i_wb_dat[31:0]
 TOP.top.u_rv.o_wb_dat[31:0]
-@1000200
+@1401200
 -WB BUS
 @820
 TOP.top.u_rv.u_st2_decode.dbg_ascii_instr[127:0]
@@ -341,41 +341,46 @@ TOP.top.u_rv.u_ctrl.o_fetch_stall
 @1401200
 -CTRL
 @800200
--CSR
--CSR_COUNTER
+-ICACHE
+@22
+TOP.top.u_rv.u_icache.i_addr[31:0]
+@28
+TOP.top.u_rv.u_icache.i_bus_ack
+@22
+TOP.top.u_rv.u_icache.i_bus_data[31:0]
+@28
+TOP.top.u_rv.u_icache.i_read
+TOP.top.u_rv.u_icache.i_write
+TOP.top.u_rv.u_icache.o_ack
+@22
+TOP.top.u_rv.u_icache.o_data[31:0]
+@28
+TOP.top.u_rv.u_icache.o_miss
+TOP.top.u_rv.u_icache.w_ways_hit[0]
+@22
+TOP.top.u_rv.u_icache.r_counter_hit[31:0]
+TOP.top.u_rv.u_icache.r_counter_miss[31:0]
+@28
+TOP.top.u_rv.u_icache.w_cache_selected
+TOP.top.u_rv.u_icache.w_cache_hit
+@22
+TOP.top.u_rv.u_icache.w_set_idx[15:0]
+@29
+TOP.top.u_rv.u_icache.set[10].w_set_selected
+@28
+TOP.top.u_rv.u_icache.set[11].w_set_selected
+@22
+TOP.top.u_rv.u_icache.w_cache_rdata[31:0]
+@28
+TOP.top.u_rv.u_icache.w_ways_hit[0]
+TOP.top.u_rv.u_icache.w_cache_hit
 @1000200
--CSR_COUNTER
--CSR
-@c00201
--DCACHE
-@22
-TOP.top.u_rv.u_dcache.i_addr[31:0]
-@28
-TOP.top.u_rv.u_dcache.i_bus_ack
-@22
-TOP.top.u_rv.u_dcache.i_bus_data[31:0]
-TOP.top.u_rv.u_dcache.i_data[31:0]
-@28
-TOP.top.u_rv.u_dcache.i_read
-TOP.top.u_rv.u_dcache.i_write
-@22
-TOP.top.u_rv.u_dcache.i_write_data[31:0]
-TOP.top.u_rv.u_dcache.i_write_sel[3:0]
-@28
-TOP.top.u_rv.u_dcache.o_ack
-@22
-TOP.top.u_rv.u_dcache.o_data[31:0]
-@28
-TOP.top.u_rv.u_dcache.o_miss
-@22
-TOP.top.u_rv.u_dcache.r_counter_hit[31:0]
-TOP.top.u_rv.u_dcache.r_counter_miss[31:0]
-TOP.top.u_rv.u_dcache.w_line_offset[15:0]
-@24
-TOP.top.u_rv.u_dcache.w_set_idx[15:0]
-@1401201
--DCACHE
+-ICACHE
 @22
 TOP.top.r_cnt[31:0]
+@28
+TOP.top.u_rv.w_memory_bus
+TOP.top.u_rv.w_icache_miss
+TOP.top.u_rv.w_fetch_ack
 [pattern_trace] 1
 [pattern_trace] 0

@@ -83,6 +83,12 @@ module rv_core
     wire[4:0]   w_write_rd;
     wire        w_write_reg_write;
 
+`ifdef ICACHE_USE
+    wire[31:0]  w_icache_data;
+    wire        w_icache_ack;
+    wire        w_icache_miss;
+`endif
+
 `ifdef DCACHE_USE
     wire[31:0]  w_dcache_data;
     wire        w_dcache_ack;
@@ -131,7 +137,11 @@ module rv_core
         .i_stall                        (w_decode_stall),
         .i_flush                        (w_decode_flush),
         //.i_bus_ack                      (i_wb_ack),
+`ifdef ICACHE_USE
+        .i_data                         (w_icache_data),
+`else
         .i_data                         (i_wb_dat),
+`endif
         .i_pc                           (w_fetch_pc),
         .i_pc_p4                        (w_fetch_pc_p4),
         .o_rs1                          (w_decode_rs1),
@@ -186,7 +196,7 @@ module rv_core
         .i_alu_ctrl                     (w_decode_alu_ctrl),
         .i_bp_rs1                       (w_ctrl_bp_rs1),
         .i_bp_rs2                       (w_ctrl_bp_rs2),
-        .i_memory_rd_val                (w_memory_alu_result),
+        .i_memory_rd_val                (w_memory_mem_read ? i_wb_dat : w_memory_alu_result),
         .i_write_rd_val                 (w_write_data),
         .i_write_back_rd_val            (r_write_back_rd_val),
         .o_alu_result                   (w_exec_alu_result),
@@ -319,13 +329,38 @@ module rv_core
     );
 `endif
 
+`ifdef ICACHE_USE
+    rv_cache
+    #(
+        .WAY_COUNT_BIT                  (0),
+        .LINE_SIZE_BIT                  (0),
+        .SET_COUNT_BIT                  (10),
+        .ADDR_HI                        (4'h0)  // only TCM region is covered by cache
+    )
+    u_icache
+    (
+        .i_clk                          (i_clk),
+        .i_reset_n                      (i_reset_n),
+        .i_addr                         ({ w_fetch_pc, 2'b00 }),
+        .i_read                         ('1),//!w_memory_bus),
+        .i_write                        ('0),
+        .i_bus_data                     (i_wb_dat),
+        .i_write_sel                    ('1),
+        .i_write_data                   ('0),
+        .i_bus_ack                      (w_fetch_ack),
+        .o_data                         (w_icache_data),
+        .o_miss                         (w_icache_miss),
+        .o_ack                          (w_icache_ack)
+    );
+`endif
+
 `ifdef DCACHE_USE
     rv_cache
     #(
-        .LINE_COUNT_BIT                 (0),
+        .WAY_COUNT_BIT                  (1),
         .LINE_SIZE_BIT                  (0),
-        .SET_COUNT_BIT                  (9),
-        .ADDR_HI                        (4'h0)  // only TCM region is covered by data cache
+        .SET_COUNT_BIT                  (10),
+        .ADDR_HI                        (4'h0)  // only TCM region is covered by cache
     )
     u_dcache
     (
@@ -338,7 +373,6 @@ module rv_core
         .i_write_sel                    (w_memory_mem_read ? '1 : w_memory_sel),
         .i_write_data                   (w_memory_wdata),
         .i_bus_ack                      (i_wb_ack),
-        .i_data                         ('0),
         .o_data                         (w_dcache_data),
         .o_miss                         (w_dcache_miss),
         .o_ack                          (w_dcache_ack)
@@ -352,10 +386,21 @@ module rv_core
                             w_dcache_miss & 
 `endif
                             (w_memory_mem_write | w_memory_mem_read);
-    assign  w_fetch_ack = (!w_memory_bus) & i_wb_ack;
+    assign  w_fetch_ack = 
+`ifdef ICACHE_USE
+                            (!(w_memory_bus & w_icache_miss)) &
+`else
+                            (!w_memory_bus) &
+`endif
+                            i_wb_ack;
 
 // WB BUS assignments
-    assign  o_wb_adr = w_memory_bus ? w_memory_alu_result : { w_fetch_pc, 2'b00 };
+    assign  o_wb_adr = w_memory_bus ? w_memory_alu_result :
+`ifdef ICACHE_USE
+                                        (w_icache_miss ? { w_fetch_pc, 2'b00 } : '0);
+`else
+                                        { w_fetch_pc, 2'b00 } ;
+`endif
     assign  o_wb_dat = w_memory_wdata;
     assign  o_wb_we = w_memory_bus ? w_memory_mem_write : '0;
     assign  o_wb_sel = w_memory_bus ? w_memory_sel : '1;
