@@ -63,7 +63,7 @@ top: obj_dir/Vtop
 #	@echo "-- COVERAGE ----------------"
 #	@rm -rf logs/annotated
 #	$(VERILATOR_COVERAGE) --annotate logs/annotated logs/coverage.dat
-	/mnt/c/msys64/mingw32/bin/gtkwave.exe -a $@.gtkw -6 -7 logs_$@/wave.fst
+	gtkwave -a $@.gtkw -6 -7 logs_$@/wave.fst
 
 dhry: obj_dir/Vtop
 	@echo "--- Run benchmark ---"
