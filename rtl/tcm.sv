@@ -42,7 +42,7 @@ module tcm
         altsyncram_component.intended_device_family = "Cyclone V",
         altsyncram_component.lpm_type = "altsyncram",
         altsyncram_component.numwords_a = MEM_SIZE,
-        altsyncram_component.operation_mode = "BIDIR_SINGLE_PORT",
+        altsyncram_component.operation_mode = "SINGLE_PORT",
         altsyncram_component.outdata_aclr_a = "NONE",
         altsyncram_component.outdata_reg_a = "UNREGISTERED",
         altsyncram_component.power_up_uninitialized = "FALSE",

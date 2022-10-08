@@ -90,7 +90,7 @@ module top
     wire[(MAIN_NIC_SLAVES_COUNT-1):0][31:0]	w_main_slave_rdata;
 
     assign  w_main_slave_rdata[(MAIN_NIC_SLAVES_COUNT-1):3] = '0;
-    assign  w_main_slave_ack  [(MAIN_NIC_SLAVES_COUNT-1):3] = '0;
+    assign  w_main_slave_ack  [(MAIN_NIC_SLAVES_COUNT-2):3] = '0;
     assign  w_main_slave_ack[15] = '1;
 
     nic
@@ -121,7 +121,6 @@ module top
         .i_data                         (w_wb_wdata),
         .o_data                         (w_main_slave_rdata[MAIN_NIC_SLAVE_TCM])
     );
-    assign  w_main_slave_rdata[0] = '0;
     assign  w_main_slave_ack  [0] = '1;
 
     wire    w_uart_txen;

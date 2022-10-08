@@ -41,45 +41,49 @@ module rv_cache
     wire[15:0]  w_set_idx;
     wire        w_cache_selected;
 
-if (LINE_SIZE_BIT > 0)
-begin
-    assign  w_line_offset[15:LINE_SIZE_BIT]    = '0;
-    assign  w_line_offset[(LINE_SIZE_BIT-1):0] = i_addr[LINE_OFFSET_END-:LINE_SIZE_BIT];
-end
-else
-begin
-    assign  w_line_offset = '0;
-end
+    generate
+        if (LINE_SIZE_BIT > 0)
+        begin
+            assign  w_line_offset[15:LINE_SIZE_BIT]    = '0;
+            assign  w_line_offset[(LINE_SIZE_BIT-1):0] = i_addr[LINE_OFFSET_END-:LINE_SIZE_BIT];
+        end
+        else
+        begin
+            assign  w_line_offset = '0;
+        end
 
-if (SET_COUNT_BIT > 0)
-begin
-    assign  w_set_idx[15:SET_COUNT_BIT]    = '0;
-    assign  w_set_idx[(SET_COUNT_BIT-1):0] = i_addr[SET_OFFSET_END-:SET_COUNT_BIT];
-end
-else
-begin
-    assign  w_set_idx = '0;
-end
+        if (SET_COUNT_BIT > 0)
+        begin
+            assign  w_set_idx[15:SET_COUNT_BIT]    = '0;
+            assign  w_set_idx[(SET_COUNT_BIT-1):0] = i_addr[SET_OFFSET_END-:SET_COUNT_BIT];
+        end
+        else
+        begin
+            assign  w_set_idx = '0;
+        end
+    endgenerate
 
     reg[31:0]   r_counter_miss, r_counter_hit;
 
     wire[(TAG_WIDTH-1):0]   w_addr_tag;
     wire[(SET_COUNT_BIT+LINE_SIZE_BIT-1):0] w_cache_addr;
-    reg[TAG_WIDTH:0]    r_tags[SET_COUNT][WAY_COUNT];
+    reg[TAG_WIDTH:0]    r_tags[SET_COUNT];//[WAY_COUNT];
     //reg[(WAY_COUNT_BIT*WAY_COUNT-1):0] r_way_list[SET_COUNT];
     reg                 r_line_hit;
 
-    if (LINE_SIZE_BIT == 0)
-        assign  w_cache_addr = { w_set_idx[(SET_COUNT_BIT-1):0] };
-    else if (LINE_SIZE_BIT > 0)
-        assign  w_cache_addr = { w_set_idx[(SET_COUNT_BIT-1):0], w_line_offset[(LINE_SIZE_BIT-1):0] };
-    assign  w_addr_tag = i_addr[27-:TAG_WIDTH];
+    generate
+        if (LINE_SIZE_BIT == 0)
+            assign  w_cache_addr = { w_set_idx[(SET_COUNT_BIT-1):0] };
+        else if (LINE_SIZE_BIT > 0)
+            assign  w_cache_addr = { w_set_idx[(SET_COUNT_BIT-1):0], w_line_offset[(LINE_SIZE_BIT-1):0] };
+        assign  w_addr_tag = i_addr[27-:TAG_WIDTH];
+    endgenerate
 
     wire  w_cache_hit;
     wire[(WAY_COUNT-1):0]   w_tag_eq;
     wire[(WAY_COUNT-1):0]   w_way_valid;
     wire[(WAY_COUNT-1):0]   w_ways_hit;
-    wire[TAG_WIDTH:0]       w_tags_set[WAY_COUNT];
+    wire[TAG_WIDTH:0]       w_tags_set;//[WAY_COUNT];
     wire[31:0]              w_cache_way[WAY_COUNT];
     //wire[(WAY_COUNT_BIT-1):0] w_way_idx;
 
@@ -88,7 +92,7 @@ end
     //assign w_way_idx  = r_way_list[w_set_idx[(SET_COUNT_BIT-1):0]][WAY_ACTIVE_IDX+:WAY_COUNT_BIT];
 
     genvar set_idx, way_idx;
-    generate
+    /*generate
         for (set_idx=0 ; set_idx<SET_COUNT ; ++set_idx)
         begin : set
             wire   w_set_selected;
@@ -100,20 +104,32 @@ end
                 begin
                     if (i_reset_n == '0)
                     begin
-                        r_tags[set_idx][way_idx] <= '0;
-                        /*if (WAY_COUNT_BIT > 0)
-                        begin
-                            r_way_list[set_idx][(WAY_COUNT_BIT*way_idx-1)+:WAY_COUNT_BIT] <= way_idx;
-                        end*/
+                        //r_tags[set_idx][way_idx] <= '0;
                     end
                     else if (w_set_selected)
                     begin
-                        r_tags[set_idx][/*way_idx*/ 0] <= { 1'b1, w_addr_tag };
+                        r_tags[set_idx][0] <= { 1'b1, w_addr_tag };
                     end
                 end
             end
         end
-    endgenerate
+    endgenerate*/
+
+    always_ff @(posedge i_clk)
+    begin
+        if (i_reset_n == '0)
+        begin
+            //r_tags[set_idx][way_idx] <= '0;
+            /*if (WAY_COUNT_BIT > 0)
+            begin
+                r_way_list[set_idx][(WAY_COUNT_BIT*way_idx-1)+:WAY_COUNT_BIT] <= way_idx;
+            end*/
+        end
+        else if (w_cache_selected && ((i_read && i_bus_ack) || i_write))
+        begin
+            r_tags[w_set_idx] <= { 1'b1, w_addr_tag };
+        end
+    end
 
     generate
         for (way_idx=0 ; way_idx<WAY_COUNT ; ++way_idx)
@@ -122,7 +138,7 @@ end
             reg[31:0]           r_cache_way[CACHE_LINE_SIZE];
             wire[31:0]          w_rdata;
 
-            assign w_tag_way                = w_tags_set[way_idx];
+            assign w_tag_way                = w_tags_set;//[way_idx];
             assign w_way_valid[way_idx]     = w_tag_way[TAG_WIDTH];
             assign w_tag_eq[way_idx]        = (w_tag_way[(TAG_WIDTH-1):0] == w_addr_tag) &&
                                                 w_cache_selected;
