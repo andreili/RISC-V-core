@@ -13,7 +13,7 @@ module rv_regs
     output  wire[31:0]                  o_data2
 );
 
-    reg[31:0]   r_reg_file[31:1];
+    reg[31:0]   r_reg_file[0:31];
     reg[31:0]   r_data1;
     reg[31:0]   r_data2;
 

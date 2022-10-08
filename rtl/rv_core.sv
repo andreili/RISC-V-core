@@ -197,7 +197,6 @@ module rv_core
         .i_bp_rs1                       (w_ctrl_bp_rs1),
         .i_bp_rs2                       (w_ctrl_bp_rs2),
         .i_memory_rd_val                (w_memory_mem_read ? i_wb_dat : w_memory_alu_result),
-        .i_write_rd_val                 (w_write_data),
         .i_write_back_rd_val            (r_write_back_rd_val),
         .o_alu_result                   (w_exec_alu_result),
         .o_reg_write                    (w_exec_reg_write),
@@ -294,8 +293,6 @@ module rv_core
         .i_exec_res_src                 (w_exec_res_src),
         .i_memory_rd                    (w_memory_rd),
         .i_memory_reg_write             (w_memory_reg_write),
-        .i_write_rd                     (w_write_rd),
-        .i_write_reg_write              (w_write_reg_write),
         .i_write_back_write             (r_write_back_write),
         .i_write_back_rd                (r_write_back_rd),
     `ifdef MODE_STAGED
