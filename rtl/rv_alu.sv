@@ -45,7 +45,7 @@ module rv_alu
     assign  w_add      = i_src_a + w_op_b + { {32{1'b0}}, w_op_b_sel};
     assign  w_negative = w_add[31];
     assign  w_zero     = !(|w_add[31:0]);
-    assign  w_overflow = (i_src_a[31] | i_src_b[31]) & (i_src_a[31] ^ w_add[31]);
+    assign  w_overflow = (i_src_a[31] ^ i_src_b[31]) & (i_src_a[31] ^ w_add[31]);
     assign  w_carry    = w_add[32];
 
     assign  w_eq  = w_zero;
