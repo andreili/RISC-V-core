@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
-[*] Sun Oct 09 19:36:48 2022
+[*] Sun Oct 09 20:05:23 2022
 [*]
 [dumpfile] "D:\Projects\RISC-V\my_core\vrf\logs_top\wave.fst"
-[dumpfile_mtime] "Sun Oct 09 19:33:48 2022"
-[dumpfile_size] 68089
+[dumpfile_mtime] "Sun Oct 09 20:02:54 2022"
+[dumpfile_size] 10272664
 [savefile] "D:\Projects\RISC-V\my_core\vrf\top.gtkw"
-[timestart] 492
-[size] 1920 1017
-[pos] -9 -9
-*-3.259915 531 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[timestart] 1
+[size] 1920 1057
+[pos] 1911 -9
+*-14.812331 36786 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.top.
 [treeopen] TOP.top.u_rv.
@@ -18,10 +18,8 @@
 [sst_width] 231
 [signals_width] 305
 [sst_expanded] 1
-[sst_vpaned_height] 304
+[sst_vpaned_height] 318
 @28
-TOP.top.w_clk_fast
-TOP.top.w_clk_slow
 TOP.top.i_reset_n
 TOP.top.w_reset_n
 @800200
@@ -93,7 +91,7 @@ TOP.top.u_tcm.r_out[31:0]
 TOP.top.u_tcm.o_data[31:0]
 @1401200
 -TCM
-@800200
+@c00200
 -ST1_FETCH
 @28
 TOP.top.u_rv.u_st1_fetch.i_stall
@@ -105,9 +103,9 @@ TOP.top.u_rv.u_st1_fetch.o_pc[31:2]
 TOP.top.u_rv.u_st1_fetch.o_pc_p4[31:2]
 TOP.top.u_rv.u_st1_fetch.w_fetch_pc_next[31:2]
 TOP.top.u_rv.u_st1_fetch.w_fetch_pc_p4[31:2]
-@1000200
+@1401200
 -ST1_FETCH
-@800200
+@c00200
 -ST2_DECODE
 @28
 TOP.top.u_rv.u_st2_decode.i_stall
@@ -146,15 +144,15 @@ TOP.top.u_rv.u_st2_decode.dbg_ascii_alu_ctrl[127:0]
 TOP.top.u_rv.u_st2_decode.o_alu_ctrl[4:0]
 @28
 TOP.top.u_rv.u_st2_decode.o_inv_instr
-@1000200
+@1401200
 -ST2_DECODE
-@800201
+@c00200
 -ST3_EXEC
-@29
+@28
 TOP.top.u_rv.u_st3_exec.i_flush
 TOP.top.u_rv.u_st3_exec.i_bp_rs1[1:0]
 TOP.top.u_rv.u_st3_exec.i_bp_rs2[1:0]
-@23
+@22
 TOP.top.u_rv.u_st3_exec.i_memory_rd_val[31:0]
 TOP.top.u_rv.u_st3_exec.i_write_back_rd_val[31:0]
 TOP.top.u_rv.u_st3_exec.i_rs1_val[31:0]
@@ -165,16 +163,16 @@ TOP.top.u_rv.u_st3_exec.r_pc[31:2]
 TOP.top.u_rv.u_st3_exec.r_pc_p4[31:2]
 TOP.top.u_rv.u_st3_exec.r_rd[4:0]
 TOP.top.u_rv.u_st3_exec.r_imm[31:0]
-@29
+@28
 TOP.top.u_rv.u_st3_exec.r_res_src[1:0]
-@23
+@22
 TOP.top.u_rv.u_st3_exec.i_rs1_val[31:0]
 TOP.top.u_rv.u_st3_exec.i_rs2_val[31:0]
 TOP.top.u_rv.u_st3_exec.r_rs1[4:0]
 TOP.top.u_rv.u_st3_exec.r_rs2[4:0]
 TOP.top.u_rv.u_st3_exec.r_rd[4:0]
 TOP.top.u_rv.u_st3_exec.r_alu_ctrl[4:0]
-@29
+@28
 TOP.top.u_rv.u_st3_exec.r_alu_op1_sel
 TOP.top.u_rv.u_st3_exec.r_alu_op2_sel
 TOP.top.u_rv.u_st3_exec.r_reg_write
@@ -183,18 +181,18 @@ TOP.top.u_rv.u_st3_exec.r_mem_read
 TOP.top.u_rv.u_st3_exec.r_jump
 TOP.top.u_rv.u_st3_exec.r_branch
 TOP.top.u_rv.u_st3_exec.r_funct3[2:0]
-@23
+@22
 TOP.top.u_rv.u_st3_exec.w_op1[31:0]
 TOP.top.u_rv.u_st3_exec.w_op2[31:0]
-@29
+@28
 TOP.top.u_rv.u_st3_exec.w_zero
 TOP.top.u_rv.u_st3_exec.o_pc_src
-@23
+@22
 TOP.top.u_rv.u_st3_exec.w_pc[31:2]
 TOP.top.u_rv.u_st3_exec.o_pc_target[31:2]
-@800201
+@800200
 -ALU
-@c00023
+@c00022
 TOP.top.u_rv.u_st3_exec.u_alu.i_src_a[31:0]
 @28
 (0)TOP.top.u_rv.u_st3_exec.u_alu.i_src_a[31:0]
@@ -229,17 +227,17 @@ TOP.top.u_rv.u_st3_exec.u_alu.i_src_a[31:0]
 (29)TOP.top.u_rv.u_st3_exec.u_alu.i_src_a[31:0]
 (30)TOP.top.u_rv.u_st3_exec.u_alu.i_src_a[31:0]
 (31)TOP.top.u_rv.u_st3_exec.u_alu.i_src_a[31:0]
-@1401201
+@1401200
 -group_end
-@23
+@22
 TOP.top.u_rv.u_st3_exec.u_alu.i_src_b[31:0]
 TOP.top.u_rv.u_st3_exec.u_alu.i_ctrl[4:0]
-@29
+@28
 TOP.top.u_rv.u_st3_exec.u_alu.w_op_b_sel
-@23
+@22
 TOP.top.u_rv.u_st3_exec.u_alu.w_op_b[31:0]
 TOP.top.u_rv.u_st3_exec.u_alu.w_add[32:0]
-@29
+@28
 TOP.top.u_rv.u_st3_exec.u_alu.w_negative
 TOP.top.u_rv.u_st3_exec.u_alu.w_zero
 TOP.top.u_rv.u_st3_exec.u_alu.w_overflow
@@ -247,16 +245,16 @@ TOP.top.u_rv.u_st3_exec.u_alu.w_carry
 TOP.top.u_rv.u_st3_exec.u_alu.w_eq
 TOP.top.u_rv.u_st3_exec.u_alu.w_lts
 TOP.top.u_rv.u_st3_exec.u_alu.w_ltu
-@23
+@22
 TOP.top.u_rv.u_st3_exec.u_alu.w_ariph_result[31:0]
-@29
+@28
 TOP.top.u_rv.u_st3_exec.u_alu.w_cmp_result
-@1000201
+@1000200
 -ALU
-@23
+@22
 TOP.top.u_rv.u_st3_exec.o_alu_result[31:0]
 TOP.top.u_rv.u_st3_exec.o_rs2_val[31:0]
-@1000201
+@1401200
 -ST3_EXEC
 @c00200
 -ST4_MEMORY
@@ -346,7 +344,7 @@ TOP.top.u_rv.u_regs.r_reg_file[30][31:0]
 TOP.top.u_rv.u_regs.r_reg_file[31][31:0]
 @1401200
 -REG FILE
-@800200
+@c00200
 -CTRL
 @28
 TOP.top.u_rv.u_ctrl.i_clk
@@ -379,7 +377,7 @@ TOP.top.u_rv.u_ctrl.o_exec_bp_rs1[1:0]
 TOP.top.u_rv.u_ctrl.o_exec_bp_rs2[1:0]
 TOP.top.u_rv.u_ctrl.o_exec_flush
 TOP.top.u_rv.u_ctrl.o_fetch_stall
-@1000200
+@1401200
 -CTRL
 @800200
 -ICACHE
@@ -387,5 +385,9 @@ TOP.top.u_rv.u_ctrl.o_fetch_stall
 -ICACHE
 @22
 TOP.top.r_cnt[31:0]
+@23
+TOP.top.U_UART.reg_tx_buf[7:0]
+@28
+TOP.top.o_tx
 [pattern_trace] 1
 [pattern_trace] 0

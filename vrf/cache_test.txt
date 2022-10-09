@@ -1,5 +1,6 @@
 type        Dhr/sec Miss    Hits    DMIPS   DMIPS/MHz
 NO CACHE    171625  -       -       97.681  1.210
+FPGA(75MHz) 161254  -       -       91.778  1.224
 D 8*1*1     178922  0x6b2b  0x2a5a  101.834 1.273
 D 16*1*1    181772  0x5aeb  0x3a9a  103.456 1.293
 D 32*1*1    187335  0x40be  0x54c1  106.622 1.333

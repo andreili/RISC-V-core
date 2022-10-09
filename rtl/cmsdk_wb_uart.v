@@ -251,7 +251,7 @@ assign  write_enable10 = write_enable & (i_wb_adr[11:2] == 10'h004);
   assign read_mux_word[19: 8] = (i_wb_adr[11:2]==10'h004) ? reg_baud_div[19:8] : {12{1'b0}};
   assign read_mux_word[31:20] = {12{1'b0}};
 
-  always_ff @(posedge i_clk)
+  always @(posedge i_clk)
   begin
     read_mux <= read_mux_word;
     dev_sel <= i_dev_sel;
