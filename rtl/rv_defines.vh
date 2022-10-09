@@ -12,7 +12,8 @@
 
 `define STAGED_BP_DIRECT    2'b00
 `define STAGED_BP_MEMORY    2'b01
-`define STAGED_BP_WRITE_BK  2'b10
+`define STAGED_BP_WRITE     2'b10
+`define STAGED_BP_WRITE_BK  2'b11
 
 `define RESULT_SRC_ALU      2'b00
 `define RESULT_SRC_MEMORY   2'b01

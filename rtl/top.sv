@@ -107,6 +107,7 @@ module top
     )
     u_nic_main
     (
+        .i_clk                          (w_clk_slow),
         .i_nic_sel                      (1'b1),
         .i_addr_sel                     (w_wb_addr[31:28]),
         .i_rdata                        (w_main_slave_rdata),
@@ -122,7 +123,7 @@ module top
     )
     u_tcm
     (
-        .i_clk                          (w_clk_fast),
+        .i_clk                          (w_clk_slow),
         .i_sel                          (w_main_slave_sel[MAIN_NIC_SLAVE_TCM]),
         .i_addr                         (w_wb_addr[(`TCM_ADDR_WIDTH+1):2]),
         .i_write                        (w_wb_sel & { 4{w_wb_we} }),

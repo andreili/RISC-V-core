@@ -27,6 +27,7 @@ module rv_exec
     input   wire[1:0]                   i_bp_rs1,
     input   wire[1:0]                   i_bp_rs2,
     input   wire[31:0]                  i_memory_rd_val,
+    input   wire[31:0]                  i_write_rd_val,
     input   wire[31:0]                  i_write_back_rd_val,
 
     output  wire[31:0]                  o_alu_result,
@@ -123,6 +124,7 @@ module rv_exec
     begin
         case (i_bp_rs1)
         `STAGED_BP_MEMORY  : r_bp1 = i_memory_rd_val;
+        `STAGED_BP_WRITE   : r_bp1 = i_write_rd_val;
         `STAGED_BP_WRITE_BK: r_bp1 = i_write_back_rd_val;
         default:             r_bp1 = (|r_rs1) ? i_rs1_val : '0;
         endcase
@@ -132,6 +134,7 @@ module rv_exec
     begin
         case (i_bp_rs2)
         `STAGED_BP_MEMORY  : r_bp2 = i_memory_rd_val;
+        `STAGED_BP_WRITE   : r_bp2 = i_write_rd_val;
         `STAGED_BP_WRITE_BK: r_bp2 = i_write_back_rd_val;
         default:             r_bp2 = (|r_rs2) ? i_rs2_val : '0;
         endcase

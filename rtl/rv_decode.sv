@@ -38,8 +38,12 @@ module rv_decode
 `include "rv_defines.vh"
 
     reg[31:0]   r_instr;
+    reg[31:0]   r_instr_buf;
     reg[31:2]   r_pc;
     reg[31:2]   r_pc_p4;
+    reg[31:0]   w_instr;
+    reg         r_flush;
+    reg[1:0]    r_stall;
 
     wire[6:0]   w_op;
     wire[4:0]   w_rd;
@@ -109,17 +113,22 @@ module rv_decode
         begin
             r_pc <= i_pc;
             r_pc_p4 <= i_pc_p4;
-            r_instr <= i_data;
         end
     end
 
-    reg[31:0]  w_instr;
-    reg     r_flush;
-    reg     r_stall;
+    always_ff @(posedge i_clk)
+    begin
+        if (!(&r_stall))
+        begin
+            r_instr <= i_data;
+            r_instr_buf <= r_instr;
+        end
+    end
+
     always_ff @(posedge i_clk)
     begin
         r_flush <= i_flush;
-        r_stall <= i_stall;
+        r_stall <= { r_stall[0] & i_stall, i_stall };
     end
 
     always_comb
@@ -127,7 +136,7 @@ module rv_decode
         if ((!i_reset_n) | r_flush)
             w_instr = '0;
         else 
-            w_instr = r_instr;
+            w_instr = r_stall[0] ? (r_stall[1] ? r_instr_buf : r_instr) : i_data;
     end
 
     assign      w_op             = w_instr[6:0];

@@ -85,6 +85,8 @@ wire          write_enable0c; // Write enable for interrupt status register
 wire          write_enable10; // Write enable for Baud rate divider
 reg     [7:0] read_mux_byte0; // Read data multiplexer for lower 8-bit
 wire   [31:0] read_mux_word;  // Read data multiplexer for whole 32-bit
+reg    [31:0] read_mux;
+reg           dev_sel;
 
 // Signals for Control registers
 reg     [6:0] reg_ctrl;       // Control register
@@ -249,10 +251,15 @@ assign  write_enable10 = write_enable & (i_wb_adr[11:2] == 10'h004);
   assign read_mux_word[19: 8] = (i_wb_adr[11:2]==10'h004) ? reg_baud_div[19:8] : {12{1'b0}};
   assign read_mux_word[31:20] = {12{1'b0}};
 
+  always_ff @(posedge i_clk)
+  begin
+    read_mux <= read_mux_word;
+    dev_sel <= i_dev_sel;
+  end
 
   // Output read data to APB
-  assign o_wb_dat[31: 0] = (read_enable) ? read_mux_word : {32{1'b0}};
-  assign o_wb_ack  = i_dev_sel; // Always ready
+  assign o_wb_dat[31: 0] = read_mux;
+  assign o_wb_ack  = dev_sel;
 
 // --------------------------------------------
 // Baud rate generator

@@ -15,8 +15,11 @@ module rv_ctrl
     input   wire[4:0]                   i_exec_rd,
     input   wire                        i_exec_pc_sel,
     input   wire[1:0]                   i_exec_res_src,
+    input   wire                        i_exec_mem_op,
     input   wire[4:0]                   i_memory_rd,
     input   wire                        i_memory_reg_write,
+    input   wire[4:0]                   i_write_rd,
+    input   wire                        i_write_reg_write,
     input   wire                        i_write_back_write,
     input   wire[4:0]                   i_write_back_rd,
 `ifdef MODE_STAGED
@@ -88,17 +91,27 @@ module rv_ctrl
         r_reset <= { r_reset[0], !i_reset_n };
     end
 
-    wire    w_load_stall;
-    wire    w_rs1_from_memory, w_rs1_from_write_back;
-    wire    w_rs2_from_memory, w_rs2_from_write_back;
+    logic   w_next_op_from_mem;
+    logic   r_bus_busy;
+    wire    w_load_stall, w_decode_stall;
+    wire    w_rs1_from_memory, w_rs1_from_write, w_rs1_from_write_back;
+    wire    w_rs2_from_memory, w_rs2_from_write, w_rs2_from_write_back;
 
-    assign  w_load_stall = r_inv_instr | (!i_fetch_bus_ack) |
-                            ((i_exec_res_src == `RESULT_SRC_MEMORY) &
-                             ((i_decode_rs1 == i_exec_rd) || (i_decode_rs2 == i_exec_rd)));
+    always_ff @(posedge i_clk)
+    begin
+        r_bus_busy <= w_next_op_from_mem;
+    end
+
+    assign  w_next_op_from_mem = ((i_exec_res_src == `RESULT_SRC_MEMORY) &
+                                  ((i_decode_rs1 == i_exec_rd) || (i_decode_rs2 == i_exec_rd)));
+    assign  w_load_stall   = r_inv_instr | i_exec_mem_op | w_next_op_from_mem | (r_bus_busy & (!i_fetch_bus_ack));
+    assign  w_decode_stall = r_inv_instr | (!i_fetch_bus_ack) | w_next_op_from_mem;
 
     assign  w_rs1_from_memory      = i_memory_reg_write & (|i_exec_rs1) & (i_exec_rs1 == i_memory_rd);
+    assign  w_rs1_from_write       = i_write_reg_write  & (|i_exec_rs1) & (i_exec_rs1 == i_write_rd);
     assign  w_rs1_from_write_back  = i_write_back_write & (|i_exec_rs1) & (i_exec_rs1 == i_write_back_rd);
     assign  w_rs2_from_memory      = i_memory_reg_write & (|i_exec_rs2) & (i_exec_rs2 == i_memory_rd);
+    assign  w_rs2_from_write       = i_write_reg_write  & (|i_exec_rs2) & (i_exec_rs2 == i_write_rd);
     assign  w_rs2_from_write_back  = i_write_back_write & (|i_exec_rs2) & (i_exec_rs2 == i_write_back_rd);
 
     reg[1:0]    r_bp_rs1, r_bp_rs2;
@@ -106,6 +119,7 @@ module rv_ctrl
     always_comb
     begin
         if (w_rs1_from_memory) r_bp_rs1 = `STAGED_BP_MEMORY;
+        else if (w_rs1_from_write) r_bp_rs1 = `STAGED_BP_WRITE;
         else if (w_rs1_from_write_back) r_bp_rs1 = `STAGED_BP_WRITE_BK;
         else r_bp_rs1 = `STAGED_BP_DIRECT;
     end
@@ -113,6 +127,7 @@ module rv_ctrl
     always_comb
     begin
         if (w_rs2_from_memory) r_bp_rs2 = `STAGED_BP_MEMORY;
+        else if (w_rs2_from_write) r_bp_rs2 = `STAGED_BP_WRITE;
         else if (w_rs2_from_write_back) r_bp_rs2 = `STAGED_BP_WRITE_BK;
         else r_bp_rs2 = `STAGED_BP_DIRECT;
     end
@@ -120,9 +135,9 @@ module rv_ctrl
     assign  o_exec_bp_rs1 = r_bp_rs1;
     assign  o_exec_bp_rs2 = r_bp_rs2;
     assign  o_fetch_stall  = w_load_stall;
-    assign  o_decode_stall = w_load_stall;
+    assign  o_decode_stall = w_decode_stall;
     assign  o_decode_flush = r_inv_instr | i_exec_pc_sel | r_reset[0];
-    assign  o_exec_flush   = i_exec_pc_sel | w_load_stall | r_reset[1];
+    assign  o_exec_flush   = i_exec_pc_sel | w_decode_stall | r_reset[1];
 
 `endif
 
