@@ -15,7 +15,7 @@ module top
 
 `include "rv_defines.vh"
 
-    wire    w_clk, w_locked;
+    logic       w_clk_fast, w_clk_slow, w_locked;
     wire        w_reset_n;
     wire[31:0]  w_wb_addr;
     wire[31:0]  w_wb_wdata;
@@ -33,7 +33,8 @@ module top
     (
         .refclk                         (i_clk),
         .rst                            ('0),
-        .outclk_0                       (w_clk),
+        .outclk_0                       (w_clk_fast),
+        .outclk_1                       (w_clk_slow),
         .locked                         (w_locked)
     );
   `else
@@ -41,16 +42,22 @@ module top
     u_pll
     (
         .clk_in1                        (i_clk),
-        .clk_out1                       (w_clk),
+        .clk_out1                       (w_clk_fast),
+        .clk_out2                       (w_clk_slow),
         .locked                         (w_locked)
     );
   `endif
 `else
-    assign  w_clk = i_clk;
+    assign  w_clk_fast = i_clk;
     assign  w_locked = '1;
     assign  o_wb_addr = w_wb_addr;
     assign  o_wb_we = w_wb_we;
     assign  o_wb_wdata = w_wb_wdata;
+
+    always_ff @(posedge i_clk)
+    begin
+        w_clk_slow <= !w_clk_slow;
+    end
 `endif
 
     debounce
@@ -59,7 +66,7 @@ module top
     )
     u_deb_reset
     (
-        .i_clk                          (w_clk),
+        .i_clk                          (w_clk_slow),
         .i_sig                          (i_reset_n & w_locked),
         .o_sig                          (w_reset_n)
     );
@@ -67,7 +74,7 @@ module top
     rv_core
     u_rv
     (
-        .i_clk                          (w_clk),
+        .i_clk                          (w_clk_slow),
         .i_reset_n                      (w_reset_n),
         .o_wb_adr                       (w_wb_addr),
         .o_wb_dat                       (w_wb_wdata),
@@ -115,20 +122,21 @@ module top
     )
     u_tcm
     (
-        .i_clk                          (w_clk),
+        .i_clk                          (w_clk_fast),
+        .i_sel                          (w_main_slave_sel[MAIN_NIC_SLAVE_TCM]),
         .i_addr                         (w_wb_addr[(`TCM_ADDR_WIDTH+1):2]),
         .i_write                        (w_wb_sel & { 4{w_wb_we} }),
         .i_data                         (w_wb_wdata),
+        .o_ack                          (w_main_slave_ack[MAIN_NIC_SLAVE_TCM]),
         .o_data                         (w_main_slave_rdata[MAIN_NIC_SLAVE_TCM])
     );
-    assign  w_main_slave_ack  [0] = '1;
 
     wire    w_uart_txen;
 
     cmsdk_wb_uart
     U_UART
     (
-        .i_clk                          (w_clk),
+        .i_clk                          (w_clk_slow),
         .i_reset_n                      (w_reset_n),
         .i_dev_sel                      (w_main_slave_sel[MAIN_NIC_SLAVE_UART]),
         .i_wb_adr                       (w_wb_addr[11:2]),
@@ -145,7 +153,7 @@ module top
     );
 
     reg[31:0]   r_cnt;
-    always_ff @(posedge w_clk)
+    always_ff @(posedge w_clk_slow)
     begin
         r_cnt <= r_cnt + 1'b1;
     end
@@ -156,6 +164,7 @@ module top
 initial
 begin
     r_cnt = '0;
+    w_clk_slow = '0;
 end
 
 endmodule

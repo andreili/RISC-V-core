@@ -376,7 +376,7 @@ module rv_core
     );
 `endif
 
-    wire    w_memory_bus;
+    logic   w_memory_bus;
 
     assign  w_memory_bus = 
 `ifdef DCACHE_USE
