@@ -22,6 +22,9 @@ module rv_ctrl
     input   wire                        i_write_reg_write,
     input   wire                        i_write_back_write,
     input   wire[4:0]                   i_write_back_rd,
+`ifdef TO_SIM
+    output  wire                        o_inv_instr,
+`endif
 `ifdef MODE_STAGED
     //input  wire[2:0]                    o_stage,
     output  wire                        o_fetch_pre_stall,
@@ -142,6 +145,7 @@ module rv_ctrl
 `endif
 
 `ifdef TO_SIM
+    assign  o_inv_instr = r_inv_instr;
 `ifdef MODE_STAGED
 // DEBUG
     reg [127:0] dbg_ascii_stage, dbg_ascii_stage_next;

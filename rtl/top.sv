@@ -8,6 +8,7 @@ module top
     output  wire[31:0]                  o_wb_addr,
     output  wire                        o_wb_we,
     output  wire[31:0]                  o_wb_wdata,
+    output  wire[31:0]                  o_debug,
 `endif
     input   wire                        i_rx,
     output  wire                        o_tx
@@ -76,6 +77,9 @@ module top
         .o_wb_sel                       (w_wb_sel),
         .o_wb_stb                       (w_wb_stb),
         .i_wb_ack                       (w_wb_ack),
+    `ifdef TO_SIM
+        .o_debug                        (o_debug),
+    `endif
         .o_wb_cyc                       (w_wb_cyc)
     );
 

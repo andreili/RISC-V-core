@@ -14,6 +14,11 @@ int on_step_cb(uint64_t time, TOP_CLASS* p_top)
 {
     if ((time % TICK_PERIOD) == 0)
     {
+        if ((p_top->o_debug & 0x1) == 1)
+        {
+            printf("Finished. Undefined instruction\n");
+            return -1;
+        }
         if ((p_top->o_wb_addr == 0xf0000000) && (p_top->o_wb_we == 1) && (p_top->i_clk))
         {
             uint32_t data = p_top->o_wb_wdata;

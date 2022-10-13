@@ -17,6 +17,9 @@ module rv_core
     output  wire[3:0]                   o_wb_sel,
     output  wire                        o_wb_stb,
     input   wire                        i_wb_ack,
+`ifdef TO_SIM
+    output  wire[31:0]                  o_debug,
+`endif
     output  wire                        o_wb_cyc
 );
 
@@ -299,6 +302,9 @@ module rv_core
         .i_write_reg_write              (w_write_reg_write),
         .i_write_back_write             (r_write_back_write),
         .i_write_back_rd                (r_write_back_rd),
+    `ifdef TO_SIM
+        .o_inv_instr                    (o_debug[0]),
+    `endif
     `ifdef MODE_STAGED
         .o_fetch_pre_stall              (w_pre_stall),
     `endif
@@ -407,5 +413,8 @@ module rv_core
     assign  o_wb_sel = w_memory_bus ? w_memory_sel : '1;
     assign  o_wb_stb = 1'b1;//w_memory_bus;
     assign  o_wb_cyc = 1'b1;//w_memory_bus;
+`ifdef TO_SIM
+    assign  o_debug[31:1] = '0;
+`endif
 
 endmodule
