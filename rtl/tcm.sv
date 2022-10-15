@@ -17,6 +17,7 @@ module tcm
 
     localparam  MEM_SIZE = 2 ** MEM_ADDR_WIDTH;
     reg[31:0]   r_out;
+    reg         r_ack;
 
 `ifdef QUARTUS
     reg[3:0][7:0]   r_mem[0:MEM_SIZE-1];
@@ -47,9 +48,14 @@ module tcm
         end;
     end
 `endif
+    
+    always_ff @(posedge i_clk)
+    begin
+        r_ack <= i_sel;
+    end
 
     assign o_data = r_out;
-    assign  o_ack = i_sel;
+    assign  o_ack = r_ack;
 
     initial
     begin
@@ -58,9 +64,11 @@ module tcm
         if ($value$plusargs("TEST_FW=%s", fw_file))
             $readmemh(fw_file, r_mem);
         else
-    `endif
-    `ifndef QUARTUS
-            $readmemh("../vrf/test_fw/out/risc.vh", r_mem);
+            $readmemh("../sim/fw.vh", r_mem);
+    `else
+      `ifndef QUARTUS
+            $readmemh("../sim/test_fw/out/risc.vh", r_mem);
+      `endif
     `endif
     end
 

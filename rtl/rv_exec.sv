@@ -65,6 +65,8 @@ module rv_exec
     wire        w_zero;
     reg[2:0]    r_funct3;
     reg[4:0]    r_alu_ctrl;
+    logic[31:0] w_alu_result;
+    logic[31:0] w_data_out;
 
     always_ff @(posedge i_clk)
     begin
@@ -151,13 +153,15 @@ module rv_exec
         .i_src_a                        (w_op1),
         .i_src_b                        (w_op2),
         .i_ctrl                         (r_alu_ctrl),
-        .o_result                       (o_alu_result),
+        .o_result                       (w_alu_result),
         .o_zero                         (w_zero)
     );
 
-    assign  o_pc_src = (r_jump | (r_branch & (o_alu_result[0])));
+    assign  o_pc_src = (r_jump | (r_branch & (w_alu_result[0])));
     wire[31:2]  w_pc = r_pc_sel ? r_bp1[31:2] : r_pc;
     assign  o_pc_target = w_pc + r_imm[31:2];
+
+    assign  w_data_out = w_alu_result;
 
     assign  o_reg_write = r_reg_write;
     assign  o_mem_read = r_mem_read;
@@ -169,6 +173,7 @@ module rv_exec
     assign  o_res_src = r_res_src;
     assign  o_funct3 = r_funct3;
     assign  o_rs2_val = r_bp2;
+    assign  o_alu_result = w_data_out;
 
     initial
     begin

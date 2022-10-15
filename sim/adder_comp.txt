@@ -1,0 +1,6 @@
+TYPE                MaxFreq ALMs (full)
+default             81.09   996
+Ripple Carry        75.46   889
+Carry Look Ahead    80.76   912
+Kogge Stone         84.38   1097(312/308)
+Modified            81.87   913

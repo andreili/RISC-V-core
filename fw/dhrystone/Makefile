@@ -32,7 +32,7 @@ ifneq ($(lto),)
 	OPTIMIZE_FLAGS += -flto
 endif
 C_FLAGS := $(ARCH_FLAGS) -fno-exceptions -fstack-usage -MMD -MP $(OPTIMIZE_FLAGS) $(WARN_FLAGS) $(DEBUG_FLAGS)
-C_FLAGS += -Wno-strict-aliasing -DHZ=80000000 -DDRUNS=500 -DREG=register -DNDEBUG
+C_FLAGS += -Wno-strict-aliasing -DHZ=75000000 -DDRUNS=500 -DREG=register -DNDEBUG
 CPP_FLAGS := $(C_FLAGS) -std=gnu++1z -fno-rtti -fno-threadsafe-statics -fno-use-cxa-atexit
 LD_FLAGS = $(ARCH_FLAGS) -T"$(LD_SCRIPT)" -Wl,-Map="$(MAP_FILE)" -Wl,--gc-sections -nodefaultlibs -nostartfiles -static
 LIBS = -Wl,--start-group -lc -lnosys -lm -lgcc -lstdc++ -lsupc++ -Wl,--end-group
@@ -41,7 +41,7 @@ PROJ_DIR := $(shell pwd)
 
 OBJS = init.o uart.o dhry_1.o dhry_2.o xprintf.o sim.o
 #OBJS = main.o
-INC = . ../test_fw/
+INC = . ../common/
 
 OBJECTS := $(patsubst %, $(WORK_DIR)/%, $(OBJS))
 INC_DIR := $(patsubst %, -I%, $(INC))
@@ -57,7 +57,7 @@ DEPFILES := $(OBJECTS:%.o=%.d)
 .SUFFIXES: .cpp .c .o .S
 
 # All Target
-all: $(EXECUTABLE) secondary-outputs
+all: secondary-outputs
 
 $(WORK_DIR)/%.o: %.S
 	$(info Compile $<)
@@ -88,6 +88,7 @@ $(BIN_FILE): $(EXECUTABLE)
 	@$(OBJCOPY) -O binary $(EXECUTABLE) "$(BIN_FILE)"
 	$(info Generate Intel-HEX file)
 	@$(OBJCOPY) -O ihex $(EXECUTABLE) "$(HEX_FILE)"
+	@cp $(VH_FILE) ../../sim/fw.vh
 
 $(VH_FILE): $(BIN_FILE)
 	$(info Generate VH file)
@@ -106,7 +107,7 @@ clean:
 	$(info Delete work directory)
 	@$(RM) $(WORK_DIR)
 
-secondary-outputs: size.stdout $(LIST_FILE) $(BIN_FILE) $(VH_FILE) $(MIF_FILE)
+secondary-outputs: size.stdout $(LIST_FILE) $(VH_FILE)
 
 .PHONY: all clean
 .SECONDARY:

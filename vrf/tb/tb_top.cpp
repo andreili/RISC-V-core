@@ -9,12 +9,13 @@ double sc_time_stamp() { return 0; }
 #define SIM_TIME_MAX_TICK (TICK_TIME * SIM_TIME_MAX)
 
 uint32_t prev_marker;
+bool initialized;
 
 int on_step_cb(uint64_t time, TOP_CLASS* p_top)
 {
     if ((time % TICK_PERIOD) == 0)
     {
-        if ((p_top->o_debug & 0x1) == 1)
+        if (((p_top->o_debug & 0x1) == 1) && initialized)
         {
             printf("Finished. Undefined instruction\n");
             return -1;
@@ -58,6 +59,7 @@ int main(int argc, char** argv, char** env)
     tb->init(on_step_cb);
     TOP_CLASS* top = tb->get_top();
     prev_marker = 0x5a5a;
+    initialized = false;
 
     const char* cycles_str = tb->get_context()->commandArgsPlusMatch("cycles");
     uint32_t cycles = (uint32_t)-1;
@@ -71,6 +73,7 @@ int main(int argc, char** argv, char** env)
     top->i_reset_n = 0;
     tb->run_steps(20 * TICK_TIME);
     top->i_reset_n = 1;
+    initialized = true;
 
     int ret = -1;
     for (int i=0 ; i<cycles ; ++i)
@@ -78,6 +81,7 @@ int main(int argc, char** argv, char** env)
         ret = tb->run_steps(TICK_TIME);
         if (ret != 0)
         {
+            tb->run_steps(TICK_TIME);
             break;
         }
     }

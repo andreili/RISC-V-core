@@ -28,6 +28,16 @@
 #define EXIT_OK 0
 #define EXIT_FAIL 1
 
+/*void xfunc_out(unsigned char ch)
+{
+    uart_send_ch(ch);
+}
+
+int _times()
+{
+    return READ_REG32(CNT_ADDR);
+}*/
+
 /* Global Variables: */
 
 Rec_Pointer     Ptr_Glob,
@@ -296,6 +306,7 @@ main ()
   if (End_Time < 0 || Begin_Time < 0)
   {
     xprintf("Measured time invalid, returned a negative result\n");
+    xprintf("Start:%d End:%d Time:%d\n", Begin_Time, End_Time, User_Time);
     xprintf("Please check timer function.\n");
     xprintf("\n");
   }

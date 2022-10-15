@@ -234,12 +234,12 @@ module rv_decode
     assign  w_inst_ecall    = w_inst_grp_system & (w_funct3 == 3'b000) & (w_funct12 == 12'b000000000000);
     assign  w_inst_ebreak   = w_inst_grp_system & (w_funct3 == 3'b000) & (w_funct12 == 12'b000000000001);
 `ifdef EXTENSION_Zicsr
-    assign  w_inst_csrrw    = w_inst_grp_system & (w_funct3 == 3'b001);
-    assign  w_inst_csrrs    = w_inst_grp_system & (w_funct3 == 3'b010);
-    assign  w_inst_csrrc    = w_inst_grp_system & (w_funct3 == 3'b011);
-    assign  w_inst_csrrwi   = w_inst_grp_system & (w_funct3 == 3'b101);
-    assign  w_inst_csrrsi   = w_inst_grp_system & (w_funct3 == 3'b110);
-    assign  w_inst_csrrci   = w_inst_grp_system & (w_funct3 == 3'b111);
+    assign  w_inst_csrrw    = (!i_flush) & w_inst_grp_system & (w_funct3 == 3'b001);
+    assign  w_inst_csrrs    = (!i_flush) & w_inst_grp_system & (w_funct3 == 3'b010);
+    assign  w_inst_csrrc    = (!i_flush) & w_inst_grp_system & (w_funct3 == 3'b011);
+    assign  w_inst_csrrwi   = (!i_flush) & w_inst_grp_system & (w_funct3 == 3'b101);
+    assign  w_inst_csrrsi   = (!i_flush) & w_inst_grp_system & (w_funct3 == 3'b110);
+    assign  w_inst_csrrci   = (!i_flush) & w_inst_grp_system & (w_funct3 == 3'b111);
 `endif
 
     assign  w_inst_load = w_inst_lb | w_inst_lh | w_inst_lw | w_inst_lbu | w_inst_lhu;

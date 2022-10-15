@@ -6,4 +6,4 @@
 #define READ_REG32(addr) (*((volatile uint32_t*)addr))
 #define WRITE_REG32(addr, data) (*((volatile uint32_t*)addr) = data)
 
-#define SOC_CORE_SPEED (80*1000*1000)
+#define SOC_CORE_SPEED (75*1000*1000)
