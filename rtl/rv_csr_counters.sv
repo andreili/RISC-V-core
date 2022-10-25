@@ -33,7 +33,7 @@ module rv_csr_counters
     end
 `endif
 
-    reg[31:0]   r_data;
+    logic[31:0] r_data;
 
     always_comb
     begin

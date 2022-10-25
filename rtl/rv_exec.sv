@@ -12,6 +12,7 @@ module rv_exec
     input   wire[4:0]                   i_rs1,
     input   wire[4:0]                   i_rs2,
     input   wire[4:0]                   i_rd,
+    //input   wire                        i_csr_read,
     input   wire[31:0]                  i_imm,
     input   wire                        i_reg_write,
     input   wire                        i_mem_read,

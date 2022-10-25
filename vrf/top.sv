@@ -14,7 +14,7 @@ module top
     output  wire                        o_tx
 );
 
-`include "rv_defines.vh"
+`include "../rtl/rv_defines.vh"
 
     logic       w_clk, w_locked;
     wire        w_reset_n;
