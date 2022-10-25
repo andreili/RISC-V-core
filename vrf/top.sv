@@ -121,9 +121,10 @@ module top
     u_tcm
     (
         .i_clk                          (w_clk),
-        .i_sel                          (w_main_slave_sel[MAIN_NIC_SLAVE_TCM]),
+        .i_dev_sel                      (w_main_slave_sel[MAIN_NIC_SLAVE_TCM]),
         .i_addr                         (w_wb_addr[(`TCM_ADDR_WIDTH+1):2]),
-        .i_write                        (w_wb_sel & { 4{w_wb_we} }),
+        .i_sel                          (w_wb_sel),
+        .i_write                        (w_wb_we),
         .i_data                         (w_wb_wdata),
         .o_ack                          (w_main_slave_ack[MAIN_NIC_SLAVE_TCM]),
         .o_data                         (w_main_slave_rdata[MAIN_NIC_SLAVE_TCM])

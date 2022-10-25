@@ -7,9 +7,10 @@ module tcm
 )
 (
     input   wire                        i_clk,
-    input   wire                        i_sel,
+    input   wire                        i_dev_sel,
     input   wire[(MEM_ADDR_WIDTH+1):2]  i_addr,
-    input   wire[3:0]                   i_write,
+    input   wire[3:0]                   i_sel,
+    input   wire                        i_write,
     input   wire[31:0]                  i_data,
     output  wire                        o_ack,
     output  wire[31:0]                  o_data
@@ -20,38 +21,38 @@ module tcm
     reg         r_ack;
 
 `ifdef QUARTUS
-    reg[3:0][7:0]   r_mem[0:MEM_SIZE-1];
-
-    always_ff @(posedge i_clk)
-    begin
-        if (i_sel)
-        begin
-            if (i_write[0]) r_mem[i_addr][0] <= i_data[ 0+:8];
-            if (i_write[1]) r_mem[i_addr][1] <= i_data[ 8+:8];
-            if (i_write[2]) r_mem[i_addr][2] <= i_data[16+:8];
-            if (i_write[3]) r_mem[i_addr][3] <= i_data[24+:8];
-            r_out <= r_mem[i_addr];
-        end;
-    end
+    `define MEM_DEF [3:0][7:0]
+    `define QUADRANT_0 0
+    `define QUADRANT_1 1
+    `define QUADRANT_2 2
+    `define QUADRANT_3 3
 `else
-    reg[31:0]   r_mem[0:MEM_SIZE-1];
+    `define MEM_DEF [31:0]
+    `define QUADRANT_0  0+:8
+    `define QUADRANT_1  8+:8
+    `define QUADRANT_2 16+:8
+    `define QUADRANT_3 24+:8
+`endif
+
+    reg `MEM_DEF r_mem[0:MEM_SIZE-1];
 
     always_ff @(posedge i_clk)
     begin
-        if (i_sel)
         begin
-            if (i_write[0]) r_mem[i_addr][ 0+:8] <= i_data[ 0+:8];
-            if (i_write[1]) r_mem[i_addr][ 8+:8] <= i_data[ 8+:8];
-            if (i_write[2]) r_mem[i_addr][16+:8] <= i_data[16+:8];
-            if (i_write[3]) r_mem[i_addr][24+:8] <= i_data[24+:8];
+            if (i_write & i_dev_sel)
+            begin
+                if (i_sel[0]) r_mem[i_addr][`QUADRANT_0] <= i_data[ 0+:8];
+                if (i_sel[1]) r_mem[i_addr][`QUADRANT_1] <= i_data[ 8+:8];
+                if (i_sel[2]) r_mem[i_addr][`QUADRANT_2] <= i_data[16+:8];
+                if (i_sel[3]) r_mem[i_addr][`QUADRANT_3] <= i_data[24+:8];
+            end
             r_out <= r_mem[i_addr];
         end;
     end
-`endif
     
     always_ff @(posedge i_clk)
     begin
-        r_ack <= i_sel;
+        r_ack <= i_dev_sel;
     end
 
     assign o_data = r_out;
