@@ -88,11 +88,11 @@ $(BIN_FILE): $(EXECUTABLE)
 	@$(OBJCOPY) -O binary $(EXECUTABLE) "$(BIN_FILE)"
 	$(info Generate Intel-HEX file)
 	@$(OBJCOPY) -O ihex $(EXECUTABLE) "$(HEX_FILE)"
-	@cp $(VH_FILE) ../../sim/fw.vh
 
 $(VH_FILE): $(BIN_FILE)
 	$(info Generate VH file)
 	@$(OBJCOPY) --verilog-data-width=4 --reverse-bytes=4 -I binary -O verilog $(BIN_FILE) $(VH_FILE)
+	@cp $(VH_FILE) ../../sim/fw.vh
 
 $(MIF_FILE): $(BIN_FILE)
 	$(info Generate MIF file)
