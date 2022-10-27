@@ -96,19 +96,25 @@ module rv_ctrl
 
     logic   w_next_op_from_mem;
     logic   r_bus_busy;
-    wire    w_load_stall, w_decode_stall;
+    wire    w_load_stall, w_decode_stall, w_decode_flush, w_exec_flush;
     wire    w_rs1_from_memory, w_rs1_from_write, w_rs1_from_write_back;
     wire    w_rs2_from_memory, w_rs2_from_write, w_rs2_from_write_back;
+    logic   w_exec_to_decode_data;
+    logic   w_global_stall;
 
     always_ff @(posedge i_clk)
     begin
         r_bus_busy <= w_next_op_from_mem;
     end
 
-    assign  w_next_op_from_mem = ((i_exec_res_src == `RESULT_SRC_MEMORY) &
-                                  ((i_decode_rs1 == i_exec_rd) || (i_decode_rs2 == i_exec_rd)));
-    assign  w_load_stall   = r_inv_instr | i_exec_mem_op | w_next_op_from_mem | (r_bus_busy & (!i_fetch_bus_ack));
-    assign  w_decode_stall = r_inv_instr | (!i_fetch_bus_ack) | w_next_op_from_mem;
+    assign  w_global_stall = r_inv_instr | w_next_op_from_mem;
+
+    assign  w_exec_to_decode_data = ((i_decode_rs1 == i_exec_rd) || (i_decode_rs2 == i_exec_rd)) & (|i_exec_rd);
+    assign  w_next_op_from_mem = ((i_exec_res_src == `RESULT_SRC_MEMORY) & w_exec_to_decode_data);
+    assign  w_load_stall   = w_global_stall | i_exec_mem_op | (r_bus_busy & (!i_fetch_bus_ack));
+    assign  w_decode_stall = w_global_stall | (!i_fetch_bus_ack);
+    assign  w_decode_flush = r_inv_instr | i_exec_pc_sel | r_reset[0];
+    assign  w_exec_flush   = w_global_stall | (!i_fetch_bus_ack) | i_exec_pc_sel | r_reset[1];
 
     assign  w_rs1_from_memory      = i_memory_reg_write & (|i_exec_rs1) & (i_exec_rs1 == i_memory_rd);
     assign  w_rs1_from_write       = i_write_reg_write  & (|i_exec_rs1) & (i_exec_rs1 == i_write_rd);
@@ -139,8 +145,8 @@ module rv_ctrl
     assign  o_exec_bp_rs2 = r_bp_rs2;
     assign  o_fetch_stall  = w_load_stall;
     assign  o_decode_stall = w_decode_stall;
-    assign  o_decode_flush = r_inv_instr | i_exec_pc_sel | r_reset[0];
-    assign  o_exec_flush   = i_exec_pc_sel | w_decode_stall | r_reset[1];
+    assign  o_decode_flush = w_decode_flush;
+    assign  o_exec_flush   = w_exec_flush;
 
 `endif
 

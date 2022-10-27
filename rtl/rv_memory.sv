@@ -28,18 +28,16 @@ module rv_memory
     output  wire[31:0]                  o_wdata
 );
 
-    reg[31:0]   r_alu;
-    reg         r_reg_write;
-    reg         r_read;
-    reg         r_write;
-    reg[31:0]   r_wdata;
-    reg[31:0]   r_wdata_shuffled;
-    reg[1:0]    r_res_src;
-    reg[4:0]    r_rd;
-    reg[31:2]   r_pc_p4;
-    reg[31:2]   r_pc_target;
-    reg[2:0]    r_funct3;
-    reg[3:0]    r_mem_sel;
+    logic[31:0] r_alu;
+    logic       r_reg_write;
+    logic       r_read;
+    logic       r_write;
+    logic[31:0] r_wdata;
+    logic[1:0]  r_res_src;
+    logic[4:0]  r_rd;
+    logic[31:2] r_pc_p4;
+    logic[31:2] r_pc_target;
+    logic[2:0]  r_funct3;
     
     always_ff @(posedge i_clk)
     begin
@@ -55,36 +53,6 @@ module rv_memory
         r_wdata <= i_rs2_val;
     end
 
-    always_comb
-    begin
-        case (r_funct3[1:0])
-        2'b00:   r_wdata_shuffled = {4{r_wdata[0+: 8]}};
-        2'b01:   r_wdata_shuffled = {2{r_wdata[0+:16]}};
-        default: r_wdata_shuffled = r_wdata;
-        endcase
-    end
-
-    always_comb
-    begin
-        case (r_funct3[1:0])
-        2'b00: begin
-            case (r_alu[1:0])
-            2'b00: r_mem_sel = 4'b0001;
-            2'b01: r_mem_sel = 4'b0010;
-            2'b10: r_mem_sel = 4'b0100;
-            2'b11: r_mem_sel = 4'b1000;
-            endcase
-        end
-        2'b01: begin
-            case (r_alu[1])
-            1'b0: r_mem_sel = 4'b0011;
-            1'b1: r_mem_sel = 4'b1100;
-            endcase
-        end
-        default:  r_mem_sel = 4'b1111;
-        endcase
-    end
-
     assign  o_alu_result = r_alu;
     assign  o_reg_write = r_reg_write;
     assign  o_res_src = r_res_src;
@@ -94,8 +62,16 @@ module rv_memory
     assign  o_pc_target = r_pc_target;
     assign  o_mem_write = r_write;
     assign  o_mem_read = r_read;
-    assign  o_mem_sel = r_mem_sel;
-    assign  o_wdata = r_wdata_shuffled;
+
+    core_memory
+    u_mem
+    (
+        .i_funct3                       (r_funct3),
+        .i_alu_result_low               (r_alu[1:0]),
+        .i_rs2_val                      (r_wdata),
+        .o_wdata                        (o_wdata),
+        .o_mem_sel                      (o_mem_sel)
+    );
 
 initial
 begin

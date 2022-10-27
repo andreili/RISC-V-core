@@ -58,7 +58,11 @@ rv%:
 	gtkwave -a $@.gtkw -6 -7 logs_$@/wave.fst
 
 top: obj_dir/Vtop
+ifeq ($(cycles),)
 	obj_dir/Vtop +trace
+else
+	obj_dir/Vtop +trace +cycles=$(cycles)
+endif
 	gtkwave -a top.gtkw -6 -7 logs_top/wave.fst
 	@rm -rf logs_top obj_dir fw.vh
 
