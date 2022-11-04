@@ -4,6 +4,9 @@ ifneq ($(fw),)
 endif
 	make -C sim $(target)
 
+arch:
+	make -C sim tests
+
 clean:
 	make -C ./fw/test clean
 	make -C ./fw/dhrystone clean

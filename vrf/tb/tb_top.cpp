@@ -81,7 +81,6 @@ int main(int argc, char** argv, char** env)
         ret = tb->run_steps(TICK_TIME);
         if (ret != 0)
         {
-            tb->run_steps(TICK_TIME);
             break;
         }
     }

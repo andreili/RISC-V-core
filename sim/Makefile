@@ -74,13 +74,14 @@ dhry: obj_dir/Vtop
 
 test_%: $(work_dir_isa)/%.vh obj_dir/Vtop
 	@cp $< fw.vh
-	@obj_dir/Vtop +trace +TEST_FW=$*.vh && ([ $$? -eq 0 ] && echo "$@ success!") || (echo "$@ failure!" && gtkwave -a top.gtkw -6 -7 logs_top/wave.fst && exit 1)
+	@obj_dir/Vtop +trace +TEST_FW=fw.vh && ([ $$? -eq 0 ] && echo "$@ success!") || (echo "$@ failure!" && gtkwave -a top.gtkw -6 -7 logs_top/wave.fst && exit 1)
 	@mv logs_top/wave.fst $@.fst
 	@rm -rf logs_top fw.vh
 
 tests_ls = $(addprefix test_,$(tests_name))
 
 tests: $(tests_ls)
+	@rm -rf obj_dir
 
 show-config:
 	$(VERILATOR) -V

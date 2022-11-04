@@ -15,16 +15,12 @@ For instrutions and data, core have a TCM memory with individual bus.
 
 # Verification
 Core have a ready verification envionment (vrf) and using a verilator software.
-To run a TOP test, need to build firmare first:
+To run a TOP tests (supported "test", "dhrystone" firmware targets):
 
-	cd vrf/test_fv
-	make
-	cd ../
-	make top
+	make sim target=top fw=test
 
 To run a architecture test:
 
-	cd vrf/
-	make tests
+	make arch
 
-Validation environment support a output to terminal and simulation termination from FW - see a vrf/test_fw/sim.c to more details.
+Validation environment support a output to terminal and simulation termination from FW - see a fw/common/sim.c to more details.
