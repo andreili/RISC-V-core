@@ -1,4 +1,4 @@
-`timescale 1 ns / 1 ps
+`timescale 1ps/1ps
 
 /* verilator lint_off DECLFILENAME */
 /* verilator lint_off UNOPTFLAT */

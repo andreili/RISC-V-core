@@ -48,7 +48,7 @@
 // 0x10 RW    BAUDDIV[19:0] Baud divider
 //            (minimum value is 16)
 //-------------------------------------
-`timescale 1 ns / 1 ps
+`timescale 1ps/1ps
 
 module cmsdk_wb_uart (
 // --------------------------------------------------------------------------

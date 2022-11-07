@@ -1,4 +1,4 @@
-`timescale 1 ns / 1 ps
+`timescale 1ps/1ps
 
 module rv_regs
 (
