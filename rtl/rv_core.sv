@@ -407,6 +407,31 @@ module rv_core
     );
 `endif
 
+`ifdef TO_SIM
+    rv_trace
+    #(
+        .RESET_ADDR                     (RESET_ADDR)
+    )
+    u_trace
+    (
+        .i_clk                          (i_clk),
+        .i_reset_n                      (i_reset_n),
+        .i_pc                           (w_decode_pc),
+        .i_bus_data                     (i_wb_dat),
+        .i_mem_addr                     (w_memory_alu_result),
+        .i_mem_sel                      (w_memory_sel),
+        .i_mem_data                     (w_memory_wdata),
+        .i_reg_write                    (w_decode_reg_write),
+        .i_mem_write                    (w_decode_mem_write),
+        .i_mem_read                     (w_decode_mem_read),
+        .i_reg_data                     (w_write_data),
+        .i_decode_stall                 (w_decode_stall),
+        .i_decode_flush                 (w_decode_flush),
+        .i_exec_stall                   (w_exec_stall),
+        .i_exec_flush                   (w_exec_flush)
+    );
+`endif
+
     logic   w_memory_bus;
 
     assign  w_memory_bus = 
