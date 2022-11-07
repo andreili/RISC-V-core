@@ -102,7 +102,7 @@ module rv_ctrl
     end
 
     logic   w_next_op_from_mem;
-    logic   r_bus_busy;
+    logic   r_bus_busy, r_exec_mem_op;
     wire    w_load_stall, w_decode_stall, w_decode_flush;
     logic   w_exec_flush, w_exec_stall;
     wire    w_rs1_from_memory, w_rs1_from_write, w_rs1_from_write_back;
@@ -118,13 +118,14 @@ module rv_ctrl
     always_ff @(posedge i_clk)
     begin
         r_bus_busy <= w_next_op_from_mem;
+        r_exec_mem_op <= i_exec_mem_op;
     end
 
     assign  w_global_stall = r_inv_instr | w_next_op_from_mem;
 
     assign  w_exec_to_decode_data = ((i_decode_rs1 == i_exec_rd) || (i_decode_rs2 == i_exec_rd)) & (|i_exec_rd);
     assign  w_next_op_from_mem = ((i_exec_res_src == `RESULT_SRC_MEMORY) & w_exec_to_decode_data);
-    assign  w_load_stall   = (w_global_stall | i_exec_mem_op | (r_bus_busy & (!i_fetch_bus_ack))
+    assign  w_load_stall   = (w_global_stall | r_exec_mem_op | (r_bus_busy & (!i_fetch_bus_ack))
 `ifdef ALU_2_STAGE
                 | w_exec_st1_to_decode) & (!r_pipeline_cont
 `endif
