@@ -27,6 +27,8 @@ module rv_core
     wire    w_decode_stall;
     wire    w_decode_flush;
     wire    w_exec_flush;
+    logic   w_exec_st2_flush;
+    logic   w_exec_stall;
     wire    w_fetch_ack;
 
     wire[31:2]  w_fetch_pc;
@@ -64,11 +66,15 @@ module rv_core
     wire        w_exec_mem_write;
     wire[31:2]  w_exec_pc_p4;
     wire[4:0]   w_exec_rs1, w_exec_rs2;
+`ifdef ALU_2_STAGE
+    logic[4:0]  w_exec_st1_rd;
+`endif
     wire[4:0]   w_exec_rd;
     wire[1:0]   w_exec_res_src;
     wire        w_exec_pc_src;
     wire[31:2]  w_exec_pc_target;
     wire[31:0]  w_exec_rs2_val;
+    logic       w_exec_jump;
     
     wire[31:0]  w_memory_alu_result;
     wire        w_memory_reg_write;
@@ -178,6 +184,10 @@ module rv_core
         .i_clk                          (i_clk),
         //.i_reset_n                      (i_reset_n),
         .i_flush                        (w_exec_flush),
+    `ifdef ALU_2_STAGE
+        .i_st2_flush                    (w_exec_st2_flush),
+    `endif
+        .i_stall                        (w_exec_stall),
         .i_pc                           (w_decode_pc),
         .i_pc_p4                        (w_decode_pc_p4),
         .i_rs1_val                      (w_reg_data1),
@@ -206,6 +216,9 @@ module rv_core
         .o_reg_write                    (w_exec_reg_write),
         .o_mem_read                     (w_exec_mem_read),
         .o_mem_write                    (w_exec_mem_write),
+    `ifdef ALU_2_STAGE
+        .o_st1_rd                       (w_exec_st1_rd),
+    `endif
         .o_rs1                          (w_exec_rs1),
         .o_rs2                          (w_exec_rs2),
         .o_rd                           (w_exec_rd),
@@ -214,7 +227,8 @@ module rv_core
         .o_pc_src                       (w_exec_pc_src),
         .o_pc_target                    (w_exec_pc_target),
         .o_funct3                       (w_exec_funct3),
-        .o_rs2_val                      (w_exec_rs2_val)
+        .o_rs2_val                      (w_exec_rs2_val),
+        .o_jump                         (w_exec_jump)
     );
 
     rv_memory
@@ -290,12 +304,16 @@ module rv_core
         .i_decode_rs1                   (w_decode_rs1),
         .i_decode_rs2                   (w_decode_rs2),
         .i_decode_inv_instr             (w_decode_inv_instr),
+    `ifdef ALU_2_STAGE
+        .i_exec_st1_rd                  (w_exec_st1_rd),
+    `endif
         .i_exec_rs1                     (w_exec_rs1),
         .i_exec_rs2                     (w_exec_rs2),
         .i_exec_rd                      (w_exec_rd),
         .i_exec_pc_sel                  (w_exec_pc_src),
         .i_exec_res_src                 (w_exec_res_src),
         .i_exec_mem_op                  (w_exec_mem_read | w_exec_mem_write),
+        .i_exec_jump                    (w_exec_jump),
         .i_memory_rd                    (w_memory_rd),
         .i_memory_reg_write             (w_memory_reg_write),
         .i_write_rd                     (w_write_rd),
@@ -313,8 +331,11 @@ module rv_core
         .o_fetch_stall                  (w_fetch_stall),
         .o_decode_stall                 (w_decode_stall),
         .o_decode_flush                 (w_decode_flush),
-        //.o_exec_stall                   (),
-        .o_exec_flush                   (w_exec_flush)
+        .o_exec_flush                   (w_exec_flush),
+    `ifdef ALU_2_STAGE
+        .o_exec_st2_flush               (w_exec_st2_flush),
+    `endif
+        .o_exec_stall                   (w_exec_stall)
     );
 
 `ifdef EXTENSION_Zicsr

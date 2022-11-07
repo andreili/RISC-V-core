@@ -1,5 +1,7 @@
 `timescale 1 ns / 1 ps
 
+`include "../rv_defines.vh"
+
 module core_memory
 (
     input   wire[2:0]                   i_funct3,

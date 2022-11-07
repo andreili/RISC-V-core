@@ -10,12 +10,16 @@ module rv_ctrl
     input   wire[4:0]                   i_decode_rs1,
     input   wire[4:0]                   i_decode_rs2,
     input   wire                        i_decode_inv_instr,
+`ifdef ALU_2_STAGE
+    input   wire[4:0]                   i_exec_st1_rd,
+`endif
     input   wire[4:0]                   i_exec_rs1,
     input   wire[4:0]                   i_exec_rs2,
     input   wire[4:0]                   i_exec_rd,
     input   wire                        i_exec_pc_sel,
     input   wire[1:0]                   i_exec_res_src,
     input   wire                        i_exec_mem_op,
+    input   wire                        i_exec_jump,
     input   wire[4:0]                   i_memory_rd,
     input   wire                        i_memory_reg_write,
     input   wire[4:0]                   i_write_rd,
@@ -34,8 +38,11 @@ module rv_ctrl
     output  wire                        o_fetch_stall,
     output  wire                        o_decode_stall,
     output  wire                        o_decode_flush,
-    //output  wire                        o_exec_stall,
-    output  wire                        o_exec_flush
+    output  wire                        o_exec_flush,
+`ifdef ALU_2_STAGE
+    output  wire                        o_exec_st2_flush,
+`endif
+    output  wire                        o_exec_stall
 );
 
 `ifdef MODE_STAGED
@@ -96,11 +103,17 @@ module rv_ctrl
 
     logic   w_next_op_from_mem;
     logic   r_bus_busy;
-    wire    w_load_stall, w_decode_stall, w_decode_flush, w_exec_flush;
+    wire    w_load_stall, w_decode_stall, w_decode_flush;
+    logic   w_exec_flush, w_exec_stall;
     wire    w_rs1_from_memory, w_rs1_from_write, w_rs1_from_write_back;
     wire    w_rs2_from_memory, w_rs2_from_write, w_rs2_from_write_back;
     logic   w_exec_to_decode_data;
     logic   w_global_stall;
+`ifdef ALU_2_STAGE
+    logic   w_exec_st1_to_decode;
+    logic   r_pipeline_cont;
+    logic   r_exec_st2_flush;
+`endif
 
     always_ff @(posedge i_clk)
     begin
@@ -111,10 +124,36 @@ module rv_ctrl
 
     assign  w_exec_to_decode_data = ((i_decode_rs1 == i_exec_rd) || (i_decode_rs2 == i_exec_rd)) & (|i_exec_rd);
     assign  w_next_op_from_mem = ((i_exec_res_src == `RESULT_SRC_MEMORY) & w_exec_to_decode_data);
-    assign  w_load_stall   = w_global_stall | i_exec_mem_op | (r_bus_busy & (!i_fetch_bus_ack));
-    assign  w_decode_stall = w_global_stall | (!i_fetch_bus_ack);
-    assign  w_decode_flush = r_inv_instr | i_exec_pc_sel | r_reset[0];
+    assign  w_load_stall   = (w_global_stall | i_exec_mem_op | (r_bus_busy & (!i_fetch_bus_ack))
+`ifdef ALU_2_STAGE
+                | w_exec_st1_to_decode) & (!r_pipeline_cont
+`endif
+                );
+    assign  w_decode_stall = (w_global_stall | (!i_fetch_bus_ack)
+`ifdef ALU_2_STAGE
+                | w_exec_st1_to_decode) & (!r_pipeline_cont
+`endif
+                );
+    assign  w_decode_flush = r_inv_instr | i_exec_pc_sel | r_reset[0]
+`ifdef ALU_2_STAGE
+                | w_exec_st1_to_decode
+`else
+`endif
+                ;
     assign  w_exec_flush   = w_global_stall | (!i_fetch_bus_ack) | i_exec_pc_sel | r_reset[1];
+`ifdef ALU_2_STAGE
+    //assign  w_exec_stall = i_exec_jump | w_exec_st1_to_decode;
+    assign  w_exec_st1_to_decode = ((i_decode_rs1 == i_exec_st1_rd) || (i_decode_rs2 == i_exec_st1_rd)) & (|i_exec_st1_rd);
+
+    always_ff @(posedge i_clk)
+    begin
+        w_exec_stall <= (i_exec_jump | w_exec_st1_to_decode) & (!(w_exec_stall & i_exec_jump));
+        r_pipeline_cont <= (w_exec_stall & i_exec_jump);
+        r_exec_st2_flush <= w_exec_flush;
+    end
+`else
+    assign  w_exec_stall = '0;
+`endif
 
     assign  w_rs1_from_memory      = i_memory_reg_write & (|i_exec_rs1) & (i_exec_rs1 == i_memory_rd);
     assign  w_rs1_from_write       = i_write_reg_write  & (|i_exec_rs1) & (i_exec_rs1 == i_write_rd);
@@ -147,6 +186,10 @@ module rv_ctrl
     assign  o_decode_stall = w_decode_stall;
     assign  o_decode_flush = w_decode_flush;
     assign  o_exec_flush   = w_exec_flush;
+    assign  o_exec_stall   = w_exec_stall;
+`ifdef ALU_2_STAGE
+    assign  o_exec_st2_flush = r_exec_st2_flush;
+`endif
 
 `endif
 

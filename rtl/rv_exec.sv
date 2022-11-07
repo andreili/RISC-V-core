@@ -5,6 +5,10 @@ module rv_exec
     input   wire                        i_clk,
     //input   wire                        i_reset_n,
     input   wire                        i_flush,
+`ifdef ALU_2_STAGE
+    input   wire                        i_st2_flush,
+`endif
+    input   wire                        i_stall,
     input   wire[31:2]                  i_pc,
     input   wire[31:2]                  i_pc_p4,
     input   wire[31:0]                  i_rs1_val,
@@ -35,6 +39,9 @@ module rv_exec
     output  wire                        o_reg_write,
     output  wire                        o_mem_read,
     output  wire                        o_mem_write,
+`ifdef ALU_2_STAGE
+    output  wire[4:0]                   o_st1_rd,
+`endif
     output  wire[4:0]                   o_rs1,
     output  wire[4:0]                   o_rs2,
     output  wire[4:0]                   o_rd,
@@ -43,7 +50,8 @@ module rv_exec
     output  wire                        o_pc_src,
     output  wire[31:2]                  o_pc_target,
     output  wire[2:0]                   o_funct3,
-    output  wire[31:0]                  o_rs2_val
+    output  wire[31:0]                  o_rs2_val,
+    output  wire                        o_jump
 );
 
     reg[31:2]   r_pc;
@@ -91,7 +99,7 @@ module rv_exec
             r_alu_ctrl <= '0;
             r_pc_sel <= '0;
         end
-        else
+        else if (!i_stall)
         begin
             r_pc <= i_pc;
             r_pc_p4 <= i_pc_p4;
@@ -147,34 +155,62 @@ module rv_exec
     logic[4:0]  r_st2_alu_ctrl;
     logic       r_st2_jump, r_st2_branch, r_st2_pc_sel;
     logic       r_st2_reg_write, r_st2_mem_read, r_st2_mem_write;
-    logic[4:0]  r_st2_rs1, r_st2_rs2, r_st2_rd;
+    logic[4:0]  /*r_st2_rs1, r_st2_rs2, */r_st2_rd;
     logic[1:0]  r_st2_res_src;
     logic[2:0]  r_st2_funct3;
-    logic[31:0] r_st2_rs2_val;
+    //logic[31:0] r_st2_rs2_val;
 
-    /*always_ff @(posedge i_clk)
+`ifdef ALU_2_STAGE
+    always_ff @(posedge i_clk)
     begin
-        r_st2_op1 <= w_op1;
-        r_st2_op2 <= w_op2;
-        r_st2_bp1 <= w_bp1;
-        r_st2_bp2 <= w_bp2;
-        r_st2_imm <= r_imm;
-        r_st2_pc <= r_pc;
-        r_st2_pc_p4 <= r_pc_p4;
-        r_st2_alu_ctrl <= r_alu_ctrl;
-        r_st2_jump <= r_jump;
-        r_st2_branch <= r_branch;
-        r_st2_pc_sel <= r_pc_sel;
-        r_st2_reg_write <= r_reg_write;
-        r_st2_mem_read <= r_mem_read;
-        r_st2_mem_write <= r_mem_write;
-        r_st2_rs1 <= r_rs1;
-        r_st2_rs2 <= r_rs2;
-        r_st2_rd <= r_rd;
-        r_st2_res_src <= r_res_src;
-        r_st2_funct3 <= r_funct3;
-        r_st2_rs2_val <= r_st2_bp2;
-    end*/
+        if (i_st2_flush | i_stall)
+        begin
+            r_st2_op1 <= '0;
+            r_st2_op2 <= '0;
+            r_st2_bp1 <= '0;
+            r_st2_bp2 <= '0;
+            r_st2_imm <= '0;
+            r_st2_pc <= '0;
+            r_st2_pc_p4 <= '0;
+            r_st2_alu_ctrl <= '0;
+            r_st2_jump <= '0;
+            r_st2_branch <= '0;
+            r_st2_pc_sel <= '0;
+            r_st2_reg_write <= '0;
+            r_st2_mem_read <= '0;
+            r_st2_mem_write <= '0;
+            //r_st2_rs1 <= '0;
+            //r_st2_rs2 <= '0;
+            r_st2_rd <= '0;
+            r_st2_res_src <= '0;
+            r_st2_funct3 <= '0;
+            //r_st2_rs2_val <= '0;
+        end
+        else
+        begin
+            r_st2_op1 <= w_op1;
+            r_st2_op2 <= w_op2;
+            r_st2_bp1 <= w_bp1;
+            r_st2_bp2 <= w_bp2;
+            r_st2_imm <= r_imm;
+            r_st2_pc <= r_pc;
+            r_st2_pc_p4 <= r_pc_p4;
+            r_st2_alu_ctrl <= r_alu_ctrl;
+            r_st2_jump <= r_jump;
+            r_st2_branch <= r_branch;
+            r_st2_pc_sel <= r_pc_sel;
+            r_st2_reg_write <= r_reg_write;
+            r_st2_mem_read <= r_mem_read;
+            r_st2_mem_write <= r_mem_write;
+            //r_st2_rs1 <= r_rs1;
+            //r_st2_rs2 <= r_rs2;
+            r_st2_rd <= r_rd;
+            r_st2_res_src <= r_res_src;
+            r_st2_funct3 <= r_funct3;
+            //r_st2_rs2_val <= r_st2_bp2;
+        end
+    end
+`else
     assign  r_st2_op1 = w_op1;
     assign  r_st2_op2 = w_op2;
     assign  r_st2_bp1 = w_bp1;
@@ -189,12 +225,13 @@ module rv_exec
     assign  r_st2_reg_write = r_reg_write;
     assign  r_st2_mem_read = r_mem_read;
     assign  r_st2_mem_write = r_mem_write;
-    assign  r_st2_rs1 = r_rs1;
-    assign  r_st2_rs2 = r_rs2;
+    //assign  r_st2_rs1 = r_rs1;
+    //assign  r_st2_rs2 = r_rs2;
     assign  r_st2_rd = r_rd;
     assign  r_st2_res_src = r_res_src;
     assign  r_st2_funct3 = r_funct3;
-    assign  r_st2_rs2_val = r_st2_bp2;
+    //assign  r_st2_rs2_val = r_st2_bp2;
+`endif
 
     core_exec_alu
     u_exec_alu
@@ -216,13 +253,22 @@ module rv_exec
     assign  o_reg_write = r_st2_reg_write;
     assign  o_mem_read = r_st2_mem_read;
     assign  o_mem_write = r_st2_mem_write;
+`ifdef ALU_2_STAGE
+    assign  o_st1_rd = r_rd;
+    //assign  o_rs1 = r_st2_rs1;
+    //assign  o_rs2 = r_st2_rs2;
     assign  o_rs1 = r_rs1;
     assign  o_rs2 = r_rs2;
+`else
+    assign  o_rs1 = r_rs1;
+    assign  o_rs2 = r_rs2;
+`endif
     assign  o_rd = r_st2_rd;
     assign  o_pc_p4 = r_st2_pc_p4;
     assign  o_res_src = r_st2_res_src;
     assign  o_funct3 = r_st2_funct3;
-    assign  o_rs2_val = r_st2_rs2_val;
+    assign  o_rs2_val = r_st2_bp2;
+    assign  o_jump = (r_jump | r_branch) & (i_stall);
 
     initial
     begin
