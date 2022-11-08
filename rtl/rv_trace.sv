@@ -1,5 +1,7 @@
 `timescale 1ps/1ps
 
+`include "../rv_defines.vh"
+
 module rv_trace
 #(
     parameter   RESET_ADDR
@@ -18,7 +20,9 @@ module rv_trace
     input   wire                        i_mem_read,
     input   wire                        i_decode_stall,
     input   wire                        i_decode_flush,
-    input   wire                        i_exec_stall,
+`ifdef ALU_2_STAGE
+    input   wire                        i_exec2_flush,
+`endif
     input   wire                        i_exec_flush
 );
 
@@ -27,6 +31,10 @@ module rv_trace
     logic       r_reg_write_decode, r_mem_write_decode, r_mem_read_decode;
     logic[31:0] r_instr_exec, r_pc_exec;
     logic       r_reg_write_exec, r_mem_write_exec, r_mem_read_exec;
+`ifdef ALU_2_STAGE
+    logic[31:0] r_instr_exec2, r_pc_exec2;
+    logic       r_reg_write_exec2, r_mem_write_exec2, r_mem_read_exec2;
+`endif
     logic[31:0] r_instr_mem, r_pc_mem;
     logic       r_reg_write_mem, r_mem_write_mem, r_mem_read_mem;
     logic[31:0] r_instr_wr, r_pc_wr;
@@ -315,7 +323,7 @@ module rv_trace
             r_mem_write_exec <= '0;
             r_mem_read_exec <= '0;
         end
-        else if (!i_exec_stall)
+        else
         begin
             r_pc_exec <= r_pc_decode;
             r_instr_exec <= r_instr_decode;
@@ -325,13 +333,43 @@ module rv_trace
         end
     end
 
+`ifdef ALU_2_STAGE
     always_ff @(posedge i_clk)
     begin
+        if (i_exec2_flush)
+        begin
+            r_pc_exec2 <= '0;
+            r_instr_exec2 <= '0;
+            r_reg_write_exec2 <= '0;
+            r_mem_write_exec2 <= '0;
+            r_mem_read_exec2 <= '0;
+        end
+        else
+        begin
+            r_pc_exec2 <= r_pc_exec;
+            r_instr_exec2 <= r_instr_exec;
+            r_reg_write_exec2 <= r_reg_write_exec;
+            r_mem_write_exec2 <= r_mem_write_exec;
+            r_mem_read_exec2 <= r_mem_read_exec;
+        end
+    end
+`endif
+
+    always_ff @(posedge i_clk)
+    begin
+    `ifdef ALU_2_STAGE
+        r_pc_mem <= r_pc_exec2;
+        r_instr_mem <= r_instr_exec2;
+        r_reg_write_mem <= r_reg_write_exec2;
+        r_mem_write_mem <= r_mem_write_exec2;
+        r_mem_read_mem <= r_mem_read_exec2;
+    `else
         r_pc_mem <= r_pc_exec;
         r_instr_mem <= r_instr_exec;
         r_reg_write_mem <= r_reg_write_exec;
         r_mem_write_mem <= r_mem_write_exec;
         r_mem_read_mem <= r_mem_read_exec;
+    `endif
         //
         r_pc_wr <= r_pc_mem;
         r_instr_wr <= r_instr_mem;
@@ -354,6 +392,12 @@ module rv_trace
         r_reg_write_exec = '0;
         r_mem_write_exec = '0;
         r_mem_read_exec = '0;
+    `ifdef ALU_2_STAGE
+        r_instr_exec2 = '0;
+        r_reg_write_exec2 = '0;
+        r_mem_write_exec2 = '0;
+        r_mem_read_exec2 = '0;
+    `endif
         //
         r_instr_mem = '0;
         r_reg_write_mem = '0;

@@ -8,7 +8,6 @@ module rv_exec
 `ifdef ALU_2_STAGE
     input   wire                        i_st2_flush,
 `endif
-    input   wire                        i_stall,
     input   wire[31:2]                  i_pc,
     input   wire[31:2]                  i_pc_p4,
     input   wire[31:0]                  i_rs1_val,
@@ -99,7 +98,7 @@ module rv_exec
             r_alu_ctrl <= '0;
             r_pc_sel <= '0;
         end
-        else if (!i_stall)
+        else
         begin
             r_pc <= i_pc;
             r_pc_p4 <= i_pc_p4;
@@ -163,7 +162,7 @@ module rv_exec
 `ifdef ALU_2_STAGE
     always_ff @(posedge i_clk)
     begin
-        if (i_st2_flush | i_stall)
+        if (i_st2_flush)
         begin
             r_st2_op1 <= '0;
             r_st2_op2 <= '0;
@@ -268,7 +267,11 @@ module rv_exec
     assign  o_res_src = r_st2_res_src;
     assign  o_funct3 = r_st2_funct3;
     assign  o_rs2_val = r_st2_bp2;
-    assign  o_jump = (r_jump | r_branch) & (i_stall);
+`ifdef ALU_2_STAGE
+    assign  o_jump = (r_st2_jump | r_st2_branch);
+`else
+    assign  o_jump = (r_jump | r_branch);
+`endif
 
     initial
     begin

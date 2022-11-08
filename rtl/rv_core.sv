@@ -28,7 +28,6 @@ module rv_core
     wire    w_decode_flush;
     wire    w_exec_flush;
     logic   w_exec_st2_flush;
-    logic   w_exec_stall;
     wire    w_fetch_ack;
 
     wire[31:2]  w_fetch_pc;
@@ -187,7 +186,6 @@ module rv_core
     `ifdef ALU_2_STAGE
         .i_st2_flush                    (w_exec_st2_flush),
     `endif
-        .i_stall                        (w_exec_stall),
         .i_pc                           (w_decode_pc),
         .i_pc_p4                        (w_decode_pc_p4),
         .i_rs1_val                      (w_reg_data1),
@@ -331,11 +329,10 @@ module rv_core
         .o_fetch_stall                  (w_fetch_stall),
         .o_decode_stall                 (w_decode_stall),
         .o_decode_flush                 (w_decode_flush),
-        .o_exec_flush                   (w_exec_flush),
     `ifdef ALU_2_STAGE
         .o_exec_st2_flush               (w_exec_st2_flush),
     `endif
-        .o_exec_stall                   (w_exec_stall)
+        .o_exec_flush                   (w_exec_flush)
     );
 
 `ifdef EXTENSION_Zicsr
@@ -427,7 +424,9 @@ module rv_core
         .i_reg_data                     (w_write_data),
         .i_decode_stall                 (w_decode_stall),
         .i_decode_flush                 (w_decode_flush),
-        .i_exec_stall                   (w_exec_stall),
+    `ifdef ALU_2_STAGE
+        .i_exec2_flush                  (w_exec_st2_flush),
+    `endif
         .i_exec_flush                   (w_exec_flush)
     );
 `endif

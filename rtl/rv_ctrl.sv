@@ -38,11 +38,10 @@ module rv_ctrl
     output  wire                        o_fetch_stall,
     output  wire                        o_decode_stall,
     output  wire                        o_decode_flush,
-    output  wire                        o_exec_flush,
 `ifdef ALU_2_STAGE
     output  wire                        o_exec_st2_flush,
 `endif
-    output  wire                        o_exec_stall
+    output  wire                        o_exec_flush
 );
 
 `ifdef MODE_STAGED
@@ -85,34 +84,41 @@ module rv_ctrl
     assign  o_exec_flush = 1'b0;
 `else
 
-    reg         r_inv_instr;
+    logic[1:0]  r_inv_instr_check;
+    logic       r_invalid_instr;
     reg[1:0]    r_reset;
+    logic       w_invalid;
 
+`ifdef ALU_2_STAGE
+    assign  w_invalid = r_inv_instr_check[1];
+`else
+    assign  w_invalid = r_inv_instr_check[0];
+`endif
     always_ff @(posedge i_clk)
     begin
         if (!i_reset_n)
-            r_inv_instr <= '0;
-        else if (i_decode_inv_instr & (!o_decode_flush))
-            r_inv_instr <= '1;
+            r_invalid_instr <= '0;
+        else if (w_invalid & (!o_decode_flush))
+            r_invalid_instr <= '1;
     end
 
     always_ff @(posedge i_clk)
     begin
+        r_inv_instr_check <= { r_inv_instr_check[0] & (!i_exec_pc_sel), i_decode_inv_instr & (!i_exec_pc_sel) };
         r_reset <= { r_reset[0], !i_reset_n };
     end
 
     logic   w_next_op_from_mem;
     logic   r_bus_busy, r_exec_mem_op;
     wire    w_load_stall, w_decode_stall, w_decode_flush;
-    logic   w_exec_flush, w_exec_stall;
+    logic   w_exec_flush;
     wire    w_rs1_from_memory, w_rs1_from_write, w_rs1_from_write_back;
     wire    w_rs2_from_memory, w_rs2_from_write, w_rs2_from_write_back;
     logic   w_exec_to_decode_data;
     logic   w_global_stall;
 `ifdef ALU_2_STAGE
     logic   w_exec_st1_to_decode;
-    logic   r_pipeline_cont;
-    logic   r_exec_st2_flush;
+    logic   w_exec_st2_flush;
 `endif
 
     always_ff @(posedge i_clk)
@@ -121,39 +127,25 @@ module rv_ctrl
         r_exec_mem_op <= i_exec_mem_op;
     end
 
-    assign  w_global_stall = r_inv_instr | w_next_op_from_mem;
+    assign  w_global_stall = r_invalid_instr | w_next_op_from_mem;
 
     assign  w_exec_to_decode_data = ((i_decode_rs1 == i_exec_rd) || (i_decode_rs2 == i_exec_rd)) & (|i_exec_rd);
     assign  w_next_op_from_mem = ((i_exec_res_src == `RESULT_SRC_MEMORY) & w_exec_to_decode_data);
-    assign  w_load_stall   = (w_global_stall | r_exec_mem_op | (r_bus_busy & (!i_fetch_bus_ack))
-`ifdef ALU_2_STAGE
-                | w_exec_st1_to_decode) & (!r_pipeline_cont
-`endif
-                );
-    assign  w_decode_stall = (w_global_stall | (!i_fetch_bus_ack)
-`ifdef ALU_2_STAGE
-                | w_exec_st1_to_decode) & (!r_pipeline_cont
-`endif
-                );
-    assign  w_decode_flush = r_inv_instr | i_exec_pc_sel | r_reset[0]
+    assign  w_load_stall   = w_global_stall | r_exec_mem_op | (r_bus_busy & (!i_fetch_bus_ack))
 `ifdef ALU_2_STAGE
                 | w_exec_st1_to_decode
-`else
 `endif
                 ;
-    assign  w_exec_flush   = w_global_stall | (!i_fetch_bus_ack) | i_exec_pc_sel | r_reset[1];
+    assign  w_decode_stall = w_global_stall | (!i_fetch_bus_ack)
 `ifdef ALU_2_STAGE
-    //assign  w_exec_stall = i_exec_jump | w_exec_st1_to_decode;
+                | w_exec_st1_to_decode
+`endif
+                ;
+    assign  w_decode_flush = r_invalid_instr | i_exec_pc_sel | r_reset[0];
+    assign  w_exec_flush   = w_decode_stall | i_exec_pc_sel | r_reset[1];
+`ifdef ALU_2_STAGE
     assign  w_exec_st1_to_decode = ((i_decode_rs1 == i_exec_st1_rd) || (i_decode_rs2 == i_exec_st1_rd)) & (|i_exec_st1_rd);
-
-    always_ff @(posedge i_clk)
-    begin
-        w_exec_stall <= (i_exec_jump | w_exec_st1_to_decode) & (!(w_exec_stall & i_exec_jump));
-        r_pipeline_cont <= (w_exec_stall & i_exec_jump);
-        r_exec_st2_flush <= w_exec_flush;
-    end
-`else
-    assign  w_exec_stall = '0;
+    assign  w_exec_st2_flush = i_exec_pc_sel;
 `endif
 
     assign  w_rs1_from_memory      = i_memory_reg_write & (|i_exec_rs1) & (i_exec_rs1 == i_memory_rd);
@@ -187,15 +179,14 @@ module rv_ctrl
     assign  o_decode_stall = w_decode_stall;
     assign  o_decode_flush = w_decode_flush;
     assign  o_exec_flush   = w_exec_flush;
-    assign  o_exec_stall   = w_exec_stall;
 `ifdef ALU_2_STAGE
-    assign  o_exec_st2_flush = r_exec_st2_flush;
+    assign  o_exec_st2_flush = w_exec_st2_flush;
 `endif
 
 `endif
 
 `ifdef TO_SIM
-    assign  o_inv_instr = r_inv_instr;
+    assign  o_inv_instr = r_invalid_instr;
 `ifdef MODE_STAGED
 // DEBUG
     reg [127:0] dbg_ascii_stage, dbg_ascii_stage_next;
