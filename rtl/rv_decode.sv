@@ -34,6 +34,8 @@ module rv_decode
     output  wire[1:0]                   o_csr_op,
     output  wire                        o_csr_sel,
 `endif
+    output  wire                        o_jump_imm,
+    output  wire[31:2]                  o_jump_addr,
     output  wire                        o_inv_instr
 );
 
@@ -44,6 +46,8 @@ module rv_decode
     logic[31:0] w_instr;
     logic       r_flush;
     logic[1:0]  r_stall;
+    logic[31:2] w_jump_addr;
+    logic       w_jump_imm;
 
     always_ff @(posedge i_clk)
     begin
@@ -107,10 +111,15 @@ module rv_decode
         .o_csr_op                       (o_csr_op),
         .o_csr_sel                      (o_csr_sel),
     `endif
+        .o_jump_imm                     (w_jump_imm),
         .o_inv_instr                    (o_inv_instr)
     );
 
+    assign  w_jump_addr = r_pc + o_imm[31:2];
+
     assign  o_pc = r_pc;
     assign  o_pc_p4 = r_pc_p4;
+    assign  o_jump_imm = 1'b0;//w_jump_imm & (!i_stall);
+    assign  o_jump_addr = w_jump_addr;
 
 endmodule

@@ -18,6 +18,7 @@ module rv_trace
     input   wire                        i_reg_write,
     input   wire                        i_mem_write,
     input   wire                        i_mem_read,
+    input   wire                        i_decode_jump_imm,
     input   wire                        i_decode_stall,
     input   wire                        i_decode_flush,
 `ifdef ALU_2_STAGE
@@ -315,7 +316,7 @@ module rv_trace
 
     always_ff @(posedge i_clk)
     begin
-        if (i_exec_flush)
+        if (i_exec_flush & (!i_decode_jump_imm))
         begin
             r_pc_exec <= '0;
             r_instr_exec <= '0;

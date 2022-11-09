@@ -10,8 +10,10 @@ module rv_fetch
     input   wire                        i_clk,
     input   wire                        i_reset_n,
     input   wire                        i_stall,
-    input   wire                        i_pc_sel,
-    input   wire[31:2]                  i_pc_target,
+    input   wire                        i_decode_pc_sel,
+    input   wire[31:2]                  i_decode_pc_target,
+    input   wire                        i_exec_pc_sel,
+    input   wire[31:2]                  i_exec_pc_target,
 `ifdef MODE_STAGED
     input   wire                        i_pre_stall,
 `endif
@@ -32,9 +34,11 @@ module rv_fetch
 
     assign  w_fetch_pc_p4 = r_fetch_pc + 1'b1;
 `ifdef MODE_STAGED
-    assign  w_fetch_pc_next = /*i_pc_sel ? i_pc_target : */w_fetch_pc_p4;
+    assign  w_fetch_pc_next = w_fetch_pc_p4;
 `else
-    assign  w_fetch_pc_next = i_pc_sel ? i_pc_target : w_fetch_pc_p4;
+    assign  w_fetch_pc_next = i_exec_pc_sel   ? i_exec_pc_target   : 
+                             //(i_decode_pc_sel ? i_decode_pc_target :
+                            w_fetch_pc_p4;
 `endif
 
     always_ff @(posedge i_clk)
@@ -54,7 +58,7 @@ module rv_fetch
                 r_fetch_pc <= w_fetch_pc_next;
         end
     `else
-        else if ((!i_stall) || i_pc_sel/* & i_bus_ack*/)
+        else if ((!i_stall) || i_exec_pc_sel || i_decode_pc_sel)
         begin
             r_fetch_pc <= w_fetch_pc_next;
         end

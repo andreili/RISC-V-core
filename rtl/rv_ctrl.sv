@@ -9,6 +9,7 @@ module rv_ctrl
     input   wire                        i_fetch_bus_ack,
     input   wire[4:0]                   i_decode_rs1,
     input   wire[4:0]                   i_decode_rs2,
+    input   wire                        i_decode_jump,
     input   wire                        i_decode_inv_instr,
 `ifdef ALU_2_STAGE
     input   wire[4:0]                   i_exec_st1_rd,
@@ -116,6 +117,7 @@ module rv_ctrl
     wire    w_rs2_from_memory, w_rs2_from_write, w_rs2_from_write_back;
     logic   w_exec_to_decode_data;
     logic   w_global_stall;
+    logic   r_decode_flush_after_jump;
 `ifdef ALU_2_STAGE
     logic   w_exec_st1_to_decode;
     logic   w_exec_st2_flush;
@@ -125,6 +127,7 @@ module rv_ctrl
     begin
         r_bus_busy <= w_next_op_from_mem;
         r_exec_mem_op <= i_exec_mem_op;
+        r_decode_flush_after_jump <= i_decode_jump;
     end
 
     assign  w_global_stall = r_invalid_instr | w_next_op_from_mem;
@@ -136,12 +139,12 @@ module rv_ctrl
                 | w_exec_st1_to_decode
 `endif
                 ;
-    assign  w_decode_stall = w_global_stall | (!i_fetch_bus_ack)
+    assign  w_decode_stall = w_global_stall | ((!i_fetch_bus_ack) & (!r_decode_flush_after_jump))
 `ifdef ALU_2_STAGE
                 | w_exec_st1_to_decode
 `endif
                 ;
-    assign  w_decode_flush = r_invalid_instr | i_exec_pc_sel | r_reset[0];
+    assign  w_decode_flush = r_invalid_instr | i_exec_pc_sel | (i_decode_jump & !w_decode_stall) | (r_decode_flush_after_jump & (!i_fetch_bus_ack)) | r_reset[0];
     assign  w_exec_flush   = w_decode_stall | i_exec_pc_sel | r_reset[1];
 `ifdef ALU_2_STAGE
     assign  w_exec_st1_to_decode = ((i_decode_rs1 == i_exec_st1_rd) || (i_decode_rs2 == i_exec_st1_rd)) & (|i_exec_st1_rd);
