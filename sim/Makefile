@@ -30,6 +30,14 @@ VERILATOR_INPUT = -f input.vc ../../vrf/$*.sv ../../vrf/tb/tb.cpp ../../vrf/tb/t
 
 TESTS_LIST = rv_fetch rv_decode rv_exec rv_memory rv_memory2 rw_write
 
+SIM_ARGS =
+ifneq ($(cycles),)
+SIM_ARGS += +cycles=$(cycles)
+endif
+ifneq ($(trace),)
+SIM_ARGS += +trace
+endif
+
 default: top
 #default: $(TESTS_LIST)
 
@@ -58,23 +66,16 @@ rv%:
 	gtkwave -a $@.gtkw -6 -7 logs_$@/wave.fst
 
 top: obj_dir/Vtop
-ifeq ($(cycles),)
-	obj_dir/Vtop +trace
-else
-	obj_dir/Vtop +trace +cycles=$(cycles)
-endif
-	gtkwave -a top.gtkw -6 -7 logs_top/wave.fst
-	@rm -rf logs_top obj_dir fw.vh
-
-dhry: obj_dir/Vtop
-	@echo "--- Run benchmark ---"
-	@obj_dir/Vtop +trace +TEST_FW=dhrystone/out/dhrystone.vh
-	@rm -rf obj_dir
+	obj_dir/Vtop $(SIM_ARGS)
+ifneq ($(trace),)
+	@gtkwave -a top.gtkw -6 -7 logs_top/wave.fst
 	@mv logs_top/wave.fst $@.fst
+endif
+	@rm -rf logs_top obj_dir fw.vh
 
 test_%: $(work_dir_isa)/%.vh obj_dir/Vtop
 	@cp $< fw.vh
-	@obj_dir/Vtop +trace +TEST_FW=fw.vh && ([ $$? -eq 0 ] && echo "$@ success!") || (echo "$@ failure!" && gtkwave -a top.gtkw -6 -7 logs_top/wave.fst && exit 1)
+	@obj_dir/Vtop $(SIM_ARGS) +TEST_FW=fw.vh && ([ $$? -eq 0 ] && echo "$@ success!") || (echo "$@ failure!" && gtkwave -a top.gtkw -6 -7 logs_top/wave.fst && exit 1)
 	@mv logs_top/wave.fst $@.fst
 	@rm -rf logs_top fw.vh
 
