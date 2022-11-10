@@ -40,12 +40,11 @@ module rv_decode
 );
 
     logic[31:0] r_instr;
-    logic[31:0] r_instr_buf;
     logic[31:2] r_pc;
     logic[31:2] r_pc_p4;
     logic[31:0] w_instr;
     logic       r_flush;
-    logic[1:0]  r_stall;
+    logic       r_stall;
     logic[31:2] w_jump_addr;
     logic       w_jump_imm;
 
@@ -65,17 +64,16 @@ module rv_decode
 
     always_ff @(posedge i_clk)
     begin
-        if (!(&r_stall))
+        if (!r_stall)
         begin
             r_instr <= i_data;
-            r_instr_buf <= r_instr;
         end
     end
 
     always_ff @(posedge i_clk)
     begin
         r_flush <= i_flush;
-        r_stall <= { r_stall[0] & i_stall, i_stall };
+        r_stall <= i_stall;
     end
 
     always_comb
@@ -83,7 +81,7 @@ module rv_decode
         if ((!i_reset_n) | r_flush)
             w_instr = '0;
         else 
-            w_instr = r_stall[0] ? (r_stall[1] ? r_instr_buf : r_instr) : i_data;
+            w_instr = r_stall ? r_instr : i_data;
     end
 
     core_decode
