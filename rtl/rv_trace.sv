@@ -241,10 +241,11 @@ module rv_trace
 
     function string decode_instr();
         case (w_type)
-        2'b00: $finish;
+        /*2'b00: $finish;
         2'b01: $finish;
-        2'b10: $finish;
+        2'b10: $finish;*/
         2'b11: return decode_instr_full();
+        default: $display("Invalid instruction type! %t\n", $time);
         endcase
     endfunction
 
