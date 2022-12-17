@@ -1,6 +1,6 @@
 sim:
 ifneq ($(fw),)
-	make -C ./fw/$(fw)
+	make -C ./fw/$(fw) sim=1 clean all
 endif
 	make -C sim $(target)
 

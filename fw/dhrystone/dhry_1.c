@@ -28,15 +28,10 @@
 #define EXIT_OK 0
 #define EXIT_FAIL 1
 
-/*void xfunc_out(unsigned char ch)
-{
-    uart_send_ch(ch);
-}
-
-int _times()
-{
-    return READ_REG32(CNT_ADDR);
-}*/
+int _times();
+#ifdef SIM
+#include "sim.h"
+#endif
 
 /* Global Variables: */
 
@@ -114,7 +109,7 @@ long time(int x)
 Rec_Type Next_Glob;
 Rec_Type Glob;
 
-main ()
+int main ()
 /*****/
 
   /* main program, corresponds to procedures        */
@@ -340,10 +335,8 @@ main ()
 }
 
 
-Proc_1 (Ptr_Val_Par)
+int Proc_1 (REG Rec_Pointer Ptr_Val_Par)
 /******************/
-
-REG Rec_Pointer Ptr_Val_Par;
     /* executed once */
 {
   REG Rec_Pointer Next_Record = Ptr_Val_Par->Ptr_Comp;  
@@ -371,15 +364,14 @@ REG Rec_Pointer Ptr_Val_Par;
   }
   else /* not executed */
     structassign (*Ptr_Val_Par, *Ptr_Val_Par->Ptr_Comp);
+  return 0;
 } /* Proc_1 */
 
 
-Proc_2 (Int_Par_Ref)
+int Proc_2 (One_Fifty* Int_Par_Ref)
 /******************/
     /* executed once */
     /* *Int_Par_Ref == 1, becomes 4 */
-
-One_Fifty   *Int_Par_Ref;
 {
   One_Fifty  Int_Loc;  
   Enumeration   Enum_Loc;
@@ -394,25 +386,25 @@ One_Fifty   *Int_Par_Ref;
       Enum_Loc = Ident_1;
     } /* if */
   while (Enum_Loc != Ident_1); /* true */
+  return 0;
 } /* Proc_2 */
 
 
-Proc_3 (Ptr_Ref_Par)
+int Proc_3 (Rec_Pointer* Ptr_Ref_Par)
 /******************/
     /* executed once */
     /* Ptr_Ref_Par becomes Ptr_Glob */
-
-Rec_Pointer *Ptr_Ref_Par;
 
 {
   if (Ptr_Glob != Null)
     /* then, executed */
     *Ptr_Ref_Par = Ptr_Glob->Ptr_Comp;
   Proc_7 (10, Int_Glob, &Ptr_Glob->variant.var_1.Int_Comp);
+  return 0;
 } /* Proc_3 */
 
 
-Proc_4 () /* without parameters */
+int Proc_4 () /* without parameters */
 /*******/
     /* executed once */
 {
@@ -421,15 +413,17 @@ Proc_4 () /* without parameters */
   Bool_Loc = Ch_1_Glob == 'A';
   Bool_Glob = Bool_Loc | Bool_Glob;
   Ch_2_Glob = 'B';
+  return 0;
 } /* Proc_4 */
 
 
-Proc_5 () /* without parameters */
+int Proc_5 () /* without parameters */
 /*******/
     /* executed once */
 {
   Ch_1_Glob = 'A';
   Bool_Glob = false;
+  return 0;
 } /* Proc_5 */
 
 

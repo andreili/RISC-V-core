@@ -32,7 +32,10 @@ ifneq ($(lto),)
 	OPTIMIZE_FLAGS += -flto
 endif
 C_FLAGS := $(ARCH_FLAGS) -fno-exceptions -fstack-usage -MMD -MP $(OPTIMIZE_FLAGS) $(WARN_FLAGS) $(DEBUG_FLAGS)
-C_FLAGS += -Wno-strict-aliasing -DHZ=75000000 -DDRUNS=500 -DREG=register -DNDEBUG
+C_FLAGS += -Wno-strict-aliasing -DHZ=110000000 -DDRUNS=500 -DREG=register -DNDEBUG
+ifneq ($(sim),)
+	C_FLAGS += -DSIM
+endif
 CPP_FLAGS := $(C_FLAGS) -std=gnu++1z -fno-rtti -fno-threadsafe-statics -fno-use-cxa-atexit
 LD_FLAGS = $(ARCH_FLAGS) -T"$(LD_SCRIPT)" -Wl,-Map="$(MAP_FILE)" -Wl,--gc-sections -nodefaultlibs -nostartfiles -static
 LIBS = -Wl,--start-group -lc -lnosys -lm -lgcc -lstdc++ -lsupc++ -Wl,--end-group
