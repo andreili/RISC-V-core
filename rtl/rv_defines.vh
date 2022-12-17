@@ -2,7 +2,7 @@
 //`define ICACHE_USE
 //`define DCACHE_USE
 
-//`define ALU_2_STAGE
+`define ALU_2_STAGE
 
 `define EXTENSION_Zicsr
 

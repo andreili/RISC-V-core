@@ -26,7 +26,6 @@ module core_decode
     output  wire[1:0]                   o_csr_op,
     output  wire                        o_csr_sel,
 `endif
-    output  wire                        o_jump_imm,
     output  wire                        o_inv_instr
 );
 
@@ -419,6 +418,5 @@ module core_decode
     assign  o_csr_op = r_csr_op;
     assign  o_csr_sel = r_csr_sel;
 `endif
-    assign  o_jump_imm = w_inst_jal;
 
 endmodule

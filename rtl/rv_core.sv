@@ -51,9 +51,6 @@ module rv_core
     wire[2:0]   w_decode_funct3;
     wire[4:0]   w_decode_alu_ctrl;
     wire        w_decode_inv_instr;
-    logic       w_decode_jump_imm;
-    logic[31:2] w_decode_jump_addr;
-    logic       w_decode_jump_imm_pr;
 `ifdef EXTENSION_Zicsr
     wire[11:0]  w_decode_csr_idx;
     wire[1:0]   w_decode_csr_op;
@@ -131,8 +128,6 @@ module rv_core
         .i_clk                          (i_clk),
         .i_reset_n                      (i_reset_n),
         .i_stall                        (w_fetch_stall),
-        .i_decode_pc_sel                (w_decode_jump_imm),
-        .i_decode_pc_target             (w_decode_jump_addr),
         .i_exec_pc_sel                  (w_exec_pc_src),
         .i_exec_pc_target               (w_exec_pc_target),
     `ifdef MODE_STAGED
@@ -179,12 +174,8 @@ module rv_core
         .o_csr_op                       (w_decode_csr_op),
         .o_csr_sel                      (w_decode_csr_sel),
     `endif
-        .o_jump_imm                     (w_decode_jump_imm),
-        .o_jump_addr                    (w_decode_jump_addr),
         .o_inv_instr                    (w_decode_inv_instr)
     );
-
-    assign  w_decode_jump_imm_pr = w_decode_jump_imm & (!w_exec_jump);
 
     rv_exec
     u_st3_exec
@@ -310,7 +301,6 @@ module rv_core
         .i_fetch_bus_ack                (w_fetch_ack),
         .i_decode_rs1                   (w_decode_rs1),
         .i_decode_rs2                   (w_decode_rs2),
-        .i_decode_jump                  (w_decode_jump_imm_pr),
         .i_decode_inv_instr             (w_decode_inv_instr),
     `ifdef ALU_2_STAGE
         .i_exec_st1_rd                  (w_exec_st1_rd),
@@ -432,7 +422,6 @@ module rv_core
         .i_mem_write                    (w_decode_mem_write),
         .i_mem_read                     (w_decode_mem_read),
         .i_reg_data                     (w_write_data),
-        .i_decode_jump_imm              (w_decode_jump_imm_pr),
         .i_decode_stall                 (w_decode_stall),
         .i_decode_flush                 (w_decode_flush),
     `ifdef ALU_2_STAGE
