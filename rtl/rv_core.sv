@@ -142,7 +142,7 @@ module rv_core
     );
 
     rv_uc
-    u_st1_5_uc
+    u_st2_uc
     (
         .i_clk                          (i_clk),
         .i_reset_n                      (i_reset_n),
@@ -161,7 +161,7 @@ module rv_core
     );
 
     rv_decode
-    u_st2_decode
+    u_st3_decode
     (
         .i_clk                          (i_clk),
         .i_reset_n                      (i_reset_n),
@@ -196,7 +196,7 @@ module rv_core
     );
 
     rv_exec
-    u_st3_exec
+    u_st4_5_exec
     (
         .i_clk                          (i_clk),
         //.i_reset_n                      (i_reset_n),
@@ -248,7 +248,7 @@ module rv_core
     );
 
     rv_memory
-    u_st4_memory
+    u_st6_memory
     (
         .i_clk                          (i_clk),
         //.i_reset_n                      (i_reset_n),
@@ -276,7 +276,7 @@ module rv_core
     );
 
     rv_write
-    u_st5_write
+    u_st7_write
     (
         .i_clk                          (i_clk),
         //.i_reset_n                      (i_reset_n),
