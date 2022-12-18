@@ -68,9 +68,9 @@ module rv_fetch
         if (!i_reset_n)
             r_pc_sel <= '0;
         // staged core workarround
-        else if (i_pc_sel)
+        else if (i_exec_pc_sel)
         begin
-            r_pc_latched <= i_pc_target;
+            r_pc_latched <= i_exec_pc_target;
             r_pc_sel <= '1;
         end
         else if (!i_pre_stall)

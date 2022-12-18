@@ -44,6 +44,29 @@ module rv_ctrl
     output  wire                        o_exec_flush
 );
 
+    logic       r_invalid_instr;
+    logic[1:0]  r_inv_instr_check;
+    logic       w_invalid;
+
+`ifdef ALU_2_STAGE
+    assign  w_invalid = r_inv_instr_check[1];
+`else
+    assign  w_invalid = r_inv_instr_check[0];
+`endif
+
+    always_ff @(posedge i_clk)
+    begin
+        if (!i_reset_n)
+            r_invalid_instr <= '0;
+        else if (w_invalid & (!o_decode_flush))
+            r_invalid_instr <= '1;
+    end
+
+    always_ff @(posedge i_clk)
+    begin
+        r_inv_instr_check <= { r_inv_instr_check[0] & (!i_exec_pc_sel), i_decode_inv_instr & (!i_exec_pc_sel) };
+    end
+
 `ifdef MODE_STAGED
     localparam  STAGE_FETCH             = 3'h1;
     localparam  STAGE_DECODE            = 3'h2;
@@ -66,7 +89,7 @@ module rv_ctrl
     begin : next_stage
         case (r_stage)
             STAGE_FETCH:    r_stage_next = STAGE_DECODE;
-            STAGE_DECODE:   r_stage_next = i_decode_inv_instr ? STAGE_DECODE : STAGE_EXECUTE;
+            STAGE_DECODE:   r_stage_next = r_invalid_instr ? STAGE_DECODE : STAGE_EXECUTE;
             STAGE_EXECUTE:  r_stage_next = STAGE_MEMORY;
             STAGE_MEMORY:   r_stage_next = /*(i_wb_ack) ?*/ STAGE_WRITE/* : STAGE_MEMORY*/;
             STAGE_WRITE:    r_stage_next = STAGE_FETCH;
@@ -82,29 +105,15 @@ module rv_ctrl
     assign  o_decode_stall = 1'b0;
     assign  o_decode_flush = !((r_stage == STAGE_FETCH) && (r_stage_next == STAGE_DECODE));
     assign  o_exec_flush = 1'b0;
-`else
-
-    logic[1:0]  r_inv_instr_check;
-    logic       r_invalid_instr;
-    reg[1:0]    r_reset;
-    logic       w_invalid;
-
 `ifdef ALU_2_STAGE
-    assign  w_invalid = r_inv_instr_check[1];
-`else
-    assign  w_invalid = r_inv_instr_check[0];
+    assign  o_exec_st2_flush = 1'b0;
 `endif
-    always_ff @(posedge i_clk)
-    begin
-        if (!i_reset_n)
-            r_invalid_instr <= '0;
-        else if (w_invalid & (!o_decode_flush))
-            r_invalid_instr <= '1;
-    end
+`else
+
+    reg[1:0]    r_reset;
 
     always_ff @(posedge i_clk)
     begin
-        r_inv_instr_check <= { r_inv_instr_check[0] & (!i_exec_pc_sel), i_decode_inv_instr & (!i_exec_pc_sel) };
         r_reset <= { r_reset[0], !i_reset_n };
     end
 
