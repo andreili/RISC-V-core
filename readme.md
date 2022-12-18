@@ -8,11 +8,11 @@ For instrutions and data, core have a TCM memory with individual bus.
 
 # Perfomance
 All perfomance mesured on simulation (DHRYSTONE test), Fmax checked on FPGA synthesis (target - 5CSEMA5F31C6).
-|Core type|Fmax,MHz|Dhrystone/sec|DMIPS|DMIPS/MHz|
-|-|-|-|-|-|
-|5st, ALU 1st|75|160902|91.57769|1.22104|
-|6st, ALU 2st|110|198151|121.778|1.0253|
-|profit,%|||+23.15%|-16.03%|
+|Core type|Fmax,MHz|Dhrystone/sec|DMIPS|DMIPS/MHz|Profit|Profit/MHz|
+|-|-|-|-|-|-|-|
+|5st|75|160902|91.57769|1.22104|-|-|
+|6st|110|198151|112.778|1.0253|+23.15%|-16.03%|
+|7st|125|213626|121.586|0.9727|+7.81%|-5.127%|
  
 # TODO
 - Extensions:
