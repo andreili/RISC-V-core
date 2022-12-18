@@ -27,6 +27,7 @@ module rv_trace
 );
 
     logic       r_decode_stall, r_decode_flush;
+    logic[31:0] r_instr_uc, r_pc_uc;
     logic[31:0] r_instr_decode, r_pc_decode;
     logic       r_reg_write_decode, r_mem_write_decode, r_mem_read_decode;
     logic[31:0] r_instr_exec, r_pc_exec;
@@ -244,7 +245,8 @@ module rv_trace
         2'b01: $finish;
         2'b10: $finish;*/
         2'b11: return decode_instr_full();
-        default: $display("Invalid instruction type! %t\n", $time);
+        //default: $display("Invalid instruction type! %t\n", $time);
+        default return "";
         endcase
     endfunction
 
@@ -294,23 +296,37 @@ module rv_trace
             print_decode();
     end
 
-    always_latch
+    always_ff @(posedge i_clk)
     begin
-        if (r_decode_flush)
+        if (i_decode_flush)
         begin
-            r_pc_decode = RESET_ADDR;
-            r_instr_decode = '0;
-            r_reg_write_decode = '0;
-            r_mem_write_decode = '0;
-            r_mem_read_decode = '0;
+            r_pc_uc <= RESET_ADDR;
+            r_instr_uc <= '0;
         end
-        else if (!r_decode_stall)
+        else if (!i_decode_stall)
         begin
-            r_pc_decode = { i_pc, 2'b00 };
-            r_instr_decode = i_bus_data;
-            r_reg_write_decode = i_reg_write;
-            r_mem_write_decode = i_mem_write;
-            r_mem_read_decode = i_mem_read;
+            r_pc_uc <= { i_pc, 2'b00 };
+            r_instr_uc <= i_bus_data;
+        end
+    end
+
+    always_ff @(posedge i_clk)
+    begin
+        if (i_decode_flush)
+        begin
+            r_pc_decode <= '0;
+            r_instr_decode <= '0;
+            r_reg_write_decode <= '0;
+            r_mem_write_decode <= '0;
+            r_mem_read_decode <= '0;
+        end
+        else if (!i_decode_stall)
+        begin
+            r_pc_decode <= r_pc_uc;
+            r_instr_decode <= r_instr_uc;
+            r_reg_write_decode <= i_reg_write;
+            r_mem_write_decode <= i_mem_write;
+            r_mem_read_decode <= i_mem_read;
         end
     end
 
@@ -383,6 +399,8 @@ module rv_trace
     begin
         f = $fopen("./trace.txt", "w");
         print_head();
+        //
+        r_instr_uc = '0;
         //
         r_instr_decode = '0;
         r_reg_write_decode = '0;

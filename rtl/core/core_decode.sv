@@ -6,27 +6,9 @@ module core_decode
 (
     input   wire[31:0]                  i_instr,
     input   wire                        i_flush,
-    output  wire[4:0]                   o_rs1,
-    output  wire[4:0]                   o_rs2,
-    output  wire[4:0]                   o_rd,
-    output  wire[31:0]                  o_imm,
-    output  wire                        o_reg_write,
-    output  wire                        o_mem_read,
-    output  wire                        o_mem_write,
-    output  wire[1:0]                   o_res_src,
-    output  wire                        o_jump,
-    output  wire                        o_branch,
-    output  wire                        o_alu_op1_sel,
-    output  wire                        o_alu_op2_sel,
-    output  wire[2:0]                   o_funct3,
-    output  wire[4:0]                   o_alu_ctrl,
-    output  wire                        o_pc_sel,
-`ifdef EXTENSION_Zicsr
-    output  wire[11:0]                  o_csr_idx,
-    output  wire[1:0]                   o_csr_op,
-    output  wire                        o_csr_sel,
-`endif
-    output  wire                        o_inv_instr
+    input   logic[31:2]                 i_pc,
+    input   logic[31:2]                 i_pc_p4,
+    output  decode_t                    o_bus
 );
 
     logic[6:0]  w_op;
@@ -312,7 +294,6 @@ module core_decode
     end
 `endif
 
-`ifdef TO_SIM
     logic [127:0] dbg_ascii_alu_ctrl;
     always @* begin
         dbg_ascii_alu_ctrl = '0;
@@ -395,28 +376,31 @@ module core_decode
         if (w_inst_csrrci)   dbg_ascii_instr = "csrrci";
     `endif
     end
-`endif
 
-    assign  o_rs1 = w_rs1;
-    assign  o_rs2 = w_rs2;
-    assign  o_rd = w_rd;
-    assign  o_imm = w_imm;
-    assign  o_reg_write = w_reg_write;
-    assign  o_mem_read = w_inst_load;
-    assign  o_mem_write = w_inst_store;
-    assign  o_res_src = w_res_src;
-    assign  o_jump = w_inst_jalr | w_inst_jal;
-    assign  o_branch = w_inst_branch;
-    assign  o_alu_op1_sel = r_alu_op1_sel;
-    assign  o_alu_op2_sel = r_alu_op2_sel;
-    assign  o_funct3 = w_funct3;
-    assign  o_alu_ctrl = w_alu_ctrl;
-    assign  o_pc_sel = w_inst_jalr;
-    assign  o_inv_instr = !w_inst_supported;
+    assign  o_bus.rs1 = w_rs1;
+    assign  o_bus.rs2 = w_rs2;
+    assign  o_bus.rd = w_rd;
+    assign  o_bus.pc = i_pc;
+    assign  o_bus.pc_p4 = i_pc_p4;
+    assign  o_bus.imm = w_imm;
+    assign  o_bus.reg_write = w_reg_write;
+    assign  o_bus.mem_read = w_inst_load;
+    assign  o_bus.mem_write = w_inst_store;
+    assign  o_bus.res_src = w_res_src;
+    assign  o_bus.jump = w_inst_jalr | w_inst_jal;
+    assign  o_bus.branch = w_inst_branch;
+    assign  o_bus.alu_op1_sel = r_alu_op1_sel;
+    assign  o_bus.alu_op2_sel = r_alu_op2_sel;
+    assign  o_bus.funct3 = w_funct3;
+    assign  o_bus.alu_ctrl = w_alu_ctrl;
+    assign  o_bus.pc_sel = w_inst_jalr;
+    assign  o_bus.inv_instr = !w_inst_supported;
 `ifdef EXTENSION_Zicsr
-    assign  o_csr_idx = w_funct12;
-    assign  o_csr_op = r_csr_op;
-    assign  o_csr_sel = r_csr_sel;
+    assign  o_bus.csr_idx = w_funct12;
+    assign  o_bus.csr_op = r_csr_op;
+    assign  o_bus.csr_sel = r_csr_sel;
 `endif
+    assign  o_bus.dbg_instr = dbg_ascii_instr;
+    assign  o_bus.dbg_alu_ctrl = dbg_ascii_alu_ctrl;
 
 endmodule

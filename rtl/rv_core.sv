@@ -1,6 +1,7 @@
 `timescale 1ps/1ps
 
 `include "rv_defines.vh"
+`include "rv_pkg.vh"
 
 module rv_core
 #(
@@ -35,32 +36,10 @@ module rv_core
 
     wire[31:0]  w_reg_data1, w_reg_data2;
 
-    wire[31:2]  w_uc_pc;
-    wire[31:2]  w_uc_pc_p4;
-    logic[31:0] w_uc_word;
-    
-    wire[31:2]  w_decode_pc;
-    wire[31:2]  w_decode_pc_p4;
-    wire[31:0]  w_decode_imm;
-    wire[4:0]   w_decode_rs1, w_decode_rs2, w_decode_rd;
-    wire        w_decode_reg_write;
-    wire        w_decode_mem_read;
-    wire        w_decode_mem_write;
-    wire[1:0]   w_decode_res_src;
-    wire        w_decode_pc_sel;
-    wire        w_decode_jump;
-    wire        w_decode_branch;
-    wire        w_decode_alu_op1_sel;
-    wire        w_decode_alu_op2_sel;
-    wire[2:0]   w_decode_funct3;
-    wire[4:0]   w_decode_alu_ctrl;
-    wire        w_decode_inv_instr;
-`ifdef EXTENSION_Zicsr
-    wire[11:0]  w_decode_csr_idx;
-    wire[1:0]   w_decode_csr_op;
-    wire        w_decode_csr_sel;
-    wire[31:0]  w_csr_rdata;
-`endif
+    ucode_t     uc_bus;
+    decode_t    decode_bus;
+
+    logic[31:0] w_csr_rdata;
 
     wire[2:0]   w_exec_funct3;
     wire[31:0]  w_exec_alu_result;
@@ -155,9 +134,7 @@ module rv_core
 `endif
         .i_pc                           (w_fetch_pc),
         .i_pc_p4                        (w_fetch_pc_p4),
-        .o_pc                           (w_uc_pc),
-        .o_pc_p4                        (w_uc_pc_p4),
-        .o_uc                           (w_uc_word)
+        .o_bus                          (uc_bus)
     );
 
     rv_decode
@@ -167,32 +144,8 @@ module rv_core
         .i_reset_n                      (i_reset_n),
         .i_stall                        (w_decode_stall),
         .i_flush                        (w_decode_flush),
-        .i_data                         (w_uc_word),
-        .i_pc                           (w_uc_pc),
-        .i_pc_p4                        (w_uc_pc_p4),
-        .o_rs1                          (w_decode_rs1),
-        .o_rs2                          (w_decode_rs2),
-        .o_rd                           (w_decode_rd),
-        .o_pc                           (w_decode_pc),
-        .o_pc_p4                        (w_decode_pc_p4),
-        .o_imm                          (w_decode_imm),
-        .o_reg_write                    (w_decode_reg_write),
-        .o_mem_read                     (w_decode_mem_read),
-        .o_mem_write                    (w_decode_mem_write),
-        .o_res_src                      (w_decode_res_src),
-        .o_pc_sel                       (w_decode_pc_sel),
-        .o_jump                         (w_decode_jump),
-        .o_branch                       (w_decode_branch),
-        .o_alu_op1_sel                  (w_decode_alu_op1_sel),
-        .o_alu_op2_sel                  (w_decode_alu_op2_sel),
-        .o_funct3                       (w_decode_funct3),
-        .o_alu_ctrl                     (w_decode_alu_ctrl),
-    `ifdef EXTENSION_Zicsr
-        .o_csr_idx                      (w_decode_csr_idx),
-        .o_csr_op                       (w_decode_csr_op),
-        .o_csr_sel                      (w_decode_csr_sel),
-    `endif
-        .o_inv_instr                    (w_decode_inv_instr)
+        .i_bus                          (uc_bus),
+        .o_bus                          (decode_bus)
     );
 
     rv_exec
@@ -204,25 +157,9 @@ module rv_core
     `ifdef ALU_2_STAGE
         .i_st2_flush                    (w_exec_st2_flush),
     `endif
-        .i_pc                           (w_decode_pc),
-        .i_pc_p4                        (w_decode_pc_p4),
+        .i_bus                          (decode_bus),
         .i_rs1_val                      (w_reg_data1),
         .i_rs2_val                      (w_reg_data2),
-        .i_rs1                          (w_decode_rs1),
-        .i_rs2                          (w_decode_rs2),
-        .i_rd                           (w_decode_rd),
-        .i_imm                          (w_decode_imm),
-        .i_reg_write                    (w_decode_reg_write),
-        .i_mem_read                     (w_decode_mem_read),
-        .i_mem_write                    (w_decode_mem_write),
-        .i_res_src                      (w_decode_res_src),
-        .i_pc_sel                       (w_decode_pc_sel),
-        .i_jump                         (w_decode_jump),
-        .i_branch                       (w_decode_branch),
-        .i_alu_op1_sel                  (w_decode_alu_op1_sel),
-        .i_alu_op2_sel                  (w_decode_alu_op2_sel),
-        .i_funct3                       (w_decode_funct3),
-        .i_alu_ctrl                     (w_decode_alu_ctrl),
         .i_bp_rs1                       (w_ctrl_bp_rs1),
         .i_bp_rs2                       (w_ctrl_bp_rs2),
         .i_memory_rd_val                (w_memory_mem_read ? i_wb_dat : w_memory_alu_result),
@@ -302,8 +239,8 @@ module rv_core
     (
         .i_clk                          (i_clk),
         .i_reset_n                      (i_reset_n),
-        .i_rs1                          (w_decode_rs1),
-        .i_rs2                          (w_decode_rs2),
+        .i_rs1                          (decode_bus.rs1),
+        .i_rs2                          (decode_bus.rs2),
         .i_rd                           (w_write_rd),
         .i_write                        (w_write_reg_write),
         .i_data                         (w_write_data),
@@ -317,9 +254,9 @@ module rv_core
         .i_clk                          (i_clk),
         .i_reset_n                      (i_reset_n),
         .i_fetch_bus_ack                (w_fetch_ack),
-        .i_decode_rs1                   (w_decode_rs1),
-        .i_decode_rs2                   (w_decode_rs2),
-        .i_decode_inv_instr             (w_decode_inv_instr),
+        .i_decode_rs1                   (decode_bus.rs1),
+        .i_decode_rs2                   (decode_bus.rs2),
+        .i_decode_inv_instr             (decode_bus.inv_instr),
     `ifdef ALU_2_STAGE
         .i_exec_st1_rd                  (w_exec_st1_rd),
     `endif
@@ -354,7 +291,7 @@ module rv_core
     );
 
 `ifdef EXTENSION_Zicsr
-    wire    w_instr_finished = (w_write_reg_write | w_exec_mem_write | w_decode_branch);
+    wire    w_instr_finished = (w_write_reg_write | w_exec_mem_write | decode_bus.branch);
 
     rv_csr
     u_csr
@@ -363,10 +300,10 @@ module rv_core
         .i_reset_n                      (i_reset_n),
         .i_flush                        (w_exec_flush),
         .i_instruction_executed         (w_instr_finished),
-        .i_idx                          (w_decode_csr_idx),
-        .i_op                           (w_decode_csr_op),
-        .i_sel                          (w_decode_csr_sel),
-        .i_imm                          (w_decode_imm[4:0]),
+        .i_idx                          (decode_bus.csr_idx),
+        .i_op                           (decode_bus.csr_op),
+        .i_sel                          (decode_bus.csr_sel),
+        .i_imm                          (decode_bus.imm[4:0]),
         .i_data                         (w_reg_data1),
         .o_data                         (w_csr_rdata)
     );
@@ -431,14 +368,14 @@ module rv_core
     (
         .i_clk                          (i_clk),
         .i_reset_n                      (i_reset_n),
-        .i_pc                           (w_decode_pc),
+        .i_pc                           (uc_bus.pc),
         .i_bus_data                     (i_wb_dat),
         .i_mem_addr                     (w_memory_alu_result),
         .i_mem_sel                      (w_memory_sel),
         .i_mem_data                     (w_memory_wdata),
-        .i_reg_write                    (w_decode_reg_write),
-        .i_mem_write                    (w_decode_mem_write),
-        .i_mem_read                     (w_decode_mem_read),
+        .i_reg_write                    (decode_bus.reg_write),
+        .i_mem_write                    (decode_bus.mem_write),
+        .i_mem_read                     (decode_bus.mem_read),
         .i_reg_data                     (w_write_data),
         .i_decode_stall                 (w_decode_stall),
         .i_decode_flush                 (w_decode_flush),

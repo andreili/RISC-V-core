@@ -11,9 +11,7 @@ module rv_uc
     input   wire[31:0]                  i_data,
     input   wire[31:2]                  i_pc,
     input   wire[31:2]                  i_pc_p4,
-    output  wire[31:2]                  o_pc,
-    output  wire[31:2]                  o_pc_p4,
-    output  wire[31:0]                  o_uc
+    output  ucode_t                     o_bus
 );
 
     logic[31:0] r_instr;
@@ -73,8 +71,13 @@ module rv_uc
         r_uc_code <= w_instr;
     end
 
-    assign  o_pc = r_pc;
-    assign  o_pc_p4 = r_pc_p4;
-    assign  o_uc = r_uc_code;
+    assign  o_bus.pc = r_pc;
+    assign  o_bus.pc_p4 = r_pc_p4;
+    assign  o_bus.instr = r_uc_code;
+
+    initial
+    begin
+        o_bus = '0;
+    end
 
 endmodule

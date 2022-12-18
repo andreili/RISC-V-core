@@ -83,4 +83,9 @@ module rv_fetch
     assign  o_pc = r_fetch_pc;
     assign  o_pc_p4 = w_fetch_pc_p4;
 
+    initial
+    begin
+        r_fetch_pc = '0;
+    end
+
 endmodule
