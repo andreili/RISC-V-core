@@ -8,7 +8,6 @@ module rv_decode
     input   wire                        i_reset_n,
     input   wire                        i_stall,
     input   wire                        i_flush,
-    //input   wire                        i_bus_ack,
     input   wire[31:0]                  i_data,
     input   wire[31:2]                  i_pc,
     input   wire[31:2]                  i_pc_p4,
@@ -37,13 +36,8 @@ module rv_decode
     output  wire                        o_inv_instr
 );
 
-    logic[31:0] r_instr;
     logic[31:2] r_pc;
     logic[31:2] r_pc_p4;
-    logic[31:0] w_instr;
-    logic       r_flush;
-    logic       r_stall;
-    logic       w_jump_imm;
 
     always_ff @(posedge i_clk)
     begin
@@ -59,32 +53,10 @@ module rv_decode
         end
     end
 
-    always_ff @(posedge i_clk)
-    begin
-        if (!r_stall)
-        begin
-            r_instr <= i_data;
-        end
-    end
-
-    always_ff @(posedge i_clk)
-    begin
-        r_flush <= i_flush;
-        r_stall <= i_stall;
-    end
-
-    always_comb
-    begin
-        if ((!i_reset_n) | r_flush)
-            w_instr = '0;
-        else 
-            w_instr = r_stall ? r_instr : i_data;
-    end
-
     core_decode
     u_dec
     (
-        .i_instr                        (w_instr),
+        .i_instr                        (i_data),
         .i_flush                        (i_flush),
         .o_rs1                          (o_rs1),
         .o_rs2                          (o_rs2),

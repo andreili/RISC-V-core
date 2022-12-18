@@ -34,6 +34,10 @@ module rv_core
     wire[31:2]  w_fetch_pc_p4;
 
     wire[31:0]  w_reg_data1, w_reg_data2;
+
+    wire[31:2]  w_uc_pc;
+    wire[31:2]  w_uc_pc_p4;
+    logic[31:0] w_uc_word;
     
     wire[31:2]  w_decode_pc;
     wire[31:2]  w_decode_pc_p4;
@@ -137,14 +141,13 @@ module rv_core
         .o_pc_p4                        (w_fetch_pc_p4)
     );
 
-    rv_decode
-    u_st2_decode
+    rv_uc
+    u_st1_5_uc
     (
         .i_clk                          (i_clk),
         .i_reset_n                      (i_reset_n),
         .i_stall                        (w_decode_stall),
         .i_flush                        (w_decode_flush),
-        //.i_bus_ack                      (i_wb_ack),
 `ifdef ICACHE_USE
         .i_data                         (w_icache_data),
 `else
@@ -152,6 +155,21 @@ module rv_core
 `endif
         .i_pc                           (w_fetch_pc),
         .i_pc_p4                        (w_fetch_pc_p4),
+        .o_pc                           (w_uc_pc),
+        .o_pc_p4                        (w_uc_pc_p4),
+        .o_uc                           (w_uc_word)
+    );
+
+    rv_decode
+    u_st2_decode
+    (
+        .i_clk                          (i_clk),
+        .i_reset_n                      (i_reset_n),
+        .i_stall                        (w_decode_stall),
+        .i_flush                        (w_decode_flush),
+        .i_data                         (w_uc_word),
+        .i_pc                           (w_uc_pc),
+        .i_pc_p4                        (w_uc_pc_p4),
         .o_rs1                          (w_decode_rs1),
         .o_rs2                          (w_decode_rs2),
         .o_rd                           (w_decode_rd),

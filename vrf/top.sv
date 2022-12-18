@@ -67,6 +67,7 @@ module top
 
     //rv_core_mini
     rv_core
+    //core
     u_rv
     (
         .i_clk                          (w_clk),
