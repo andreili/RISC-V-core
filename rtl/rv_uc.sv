@@ -56,7 +56,11 @@ module rv_uc
 
     always_latch
     begin
+    `ifdef MODE_STAGED
+        if ((!i_reset_n) | i_flush)
+    `else
         if ((!i_reset_n) | i_flush | r_flush)
+    `endif
         begin
             w_instr = '0;
         end

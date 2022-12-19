@@ -69,10 +69,12 @@ module rv_ctrl
 
 `ifdef MODE_STAGED
     localparam  STAGE_FETCH             = 3'h1;
-    localparam  STAGE_DECODE            = 3'h2;
-    localparam  STAGE_EXECUTE           = 3'h3;
-    localparam  STAGE_MEMORY            = 3'h4;
-    localparam  STAGE_WRITE             = 3'h5;
+    localparam  STAGE_UCODE             = 3'h2;
+    localparam  STAGE_DECODE            = 3'h3;
+    localparam  STAGE_ALU1ST            = 3'h4;
+    localparam  STAGE_ALU2ST            = 3'h5;
+    localparam  STAGE_MEMORY            = 3'h6;
+    localparam  STAGE_WRITE             = 3'h7;
 
     reg[2:0]    r_stage;
     reg[2:0]    r_stage_next;
@@ -88,9 +90,11 @@ module rv_ctrl
     always_comb
     begin : next_stage
         case (r_stage)
-            STAGE_FETCH:    r_stage_next = STAGE_DECODE;
-            STAGE_DECODE:   r_stage_next = r_invalid_instr ? STAGE_DECODE : STAGE_EXECUTE;
-            STAGE_EXECUTE:  r_stage_next = STAGE_MEMORY;
+            STAGE_FETCH:    r_stage_next = STAGE_UCODE;
+            STAGE_UCODE:    r_stage_next = STAGE_DECODE;
+            STAGE_DECODE:   r_stage_next = r_invalid_instr ? STAGE_DECODE : STAGE_ALU1ST;
+            STAGE_ALU1ST:   r_stage_next = STAGE_ALU2ST;
+            STAGE_ALU2ST:   r_stage_next = STAGE_MEMORY;
             STAGE_MEMORY:   r_stage_next = /*(i_wb_ack) ?*/ STAGE_WRITE/* : STAGE_MEMORY*/;
             STAGE_WRITE:    r_stage_next = STAGE_FETCH;
             default:        r_stage_next = STAGE_FETCH;
@@ -103,7 +107,7 @@ module rv_ctrl
     assign  o_fetch_pre_stall = !((r_stage == STAGE_WRITE) && (r_stage_next == STAGE_FETCH));
     assign  o_fetch_stall = (r_stage != STAGE_FETCH);
     assign  o_decode_stall = 1'b0;
-    assign  o_decode_flush = !((r_stage == STAGE_FETCH) && (r_stage_next == STAGE_DECODE));
+    assign  o_decode_flush = !((r_stage == STAGE_UCODE) || (r_stage == STAGE_DECODE));
     assign  o_exec_flush = 1'b0;
 `ifdef ALU_2_STAGE
     assign  o_exec_st2_flush = 1'b0;
@@ -208,8 +212,10 @@ module rv_ctrl
     always @* begin
         dbg_ascii_stage = "";
         if (r_stage == STAGE_FETCH)   dbg_ascii_stage = "fetch";
+        if (r_stage == STAGE_UCODE)   dbg_ascii_stage = "ucode";
         if (r_stage == STAGE_DECODE)  dbg_ascii_stage = "decode";
-        if (r_stage == STAGE_EXECUTE) dbg_ascii_stage = "execute";
+        if (r_stage == STAGE_ALU1ST)  dbg_ascii_stage = "alu 1";
+        if (r_stage == STAGE_ALU2ST)  dbg_ascii_stage = "alu 2";
         if (r_stage == STAGE_MEMORY)  dbg_ascii_stage = "memory";
         if (r_stage == STAGE_WRITE)   dbg_ascii_stage = "write";
     end
@@ -217,8 +223,10 @@ module rv_ctrl
     always @* begin
         dbg_ascii_stage_next = "";
         if (r_stage_next == STAGE_FETCH)   dbg_ascii_stage_next = "fetch";
+        if (r_stage_next == STAGE_UCODE)   dbg_ascii_stage_next = "ucode";
         if (r_stage_next == STAGE_DECODE)  dbg_ascii_stage_next = "decode";
-        if (r_stage_next == STAGE_EXECUTE) dbg_ascii_stage_next = "execute";
+        if (r_stage_next == STAGE_ALU1ST)  dbg_ascii_stage_next = "alu 1";
+        if (r_stage_next == STAGE_ALU2ST)  dbg_ascii_stage_next = "alu 2";
         if (r_stage_next == STAGE_MEMORY)  dbg_ascii_stage_next = "memory";
         if (r_stage_next == STAGE_WRITE)   dbg_ascii_stage_next = "write";
     end
